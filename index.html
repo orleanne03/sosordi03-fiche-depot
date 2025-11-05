@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Fiche de Dépôt - sosordi03</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+
+<h1>🖥️ Fiche de Dépôt - sosordi03</h1>
+
+<input type="text" id="search" class="input" placeholder="🔍 Rechercher un client..." oninput="rechercherClient()">
+<div id="suggest" class="suggest-box"></div>
+
+<div class="row import-row">
+  <input type="file" id="csv" accept=".csv" class="input">
+  <button class="secondary" onclick="importerCSV()">📥 Importer base clients (.csv)</button>
+</div>
+
+<div class="card">
+
+<div class="grid-2">
+  <div>
+    <label>Nom du client :</label>
+    <input id="nom" class="input" oninput="this.value = this.value.toUpperCase()">
+
+  </div>
+  <div>
+    <label>Téléphone :</label>
+    <input id="tel" class="input" maxlength="14" oninput="formatTel();verifierClient();">
+    <button id="btnAddClient" class="secondary small-btn" style="display:none;" onclick="ajouterClient()">➕ Ajouter ce client à la base</button>
+  </div>
+</div>
+
+<div class="grid-3">
+  <div>
+    <label>Type d’appareil :</label>
+    <select id="type" class="input">
+      <option>Ordinateur Portable</option>
+      <option>Ordinateur Fixe</option>
+      <option>Smartphone</option>
+      <option>Tablette</option>
+    </select>
+  </div>
+
+  <div>
+    <label>Marque :</label>
+    <select id="marque" class="input">
+      <optgroup label="Ordinateurs">
+        <option>Acer</option><option>Asus</option><option>Dell</option><option>HP</option><option>Lenovo</option><option>MSI</option><option>Gigabyte</option><option>Medion</option><option>Toshiba</option><option>Packard Bell</option><option>Samsung</option><option>Apple (Mac)</option>
+      </optgroup>
+      <optgroup label="Smartphones">
+        <option>Apple (iPhone)</option><option>Samsung</option><option>Huawei</option><option>Xiaomi / Redmi / Poco</option><option>Oppo</option><option>OnePlus</option><option>Google Pixel</option><option>Honor</option><option>Motorola</option><option>Nokia</option><option>Sony Xperia</option>
+      </optgroup>
+      <optgroup label="Tablettes">
+        <option>Apple (iPad)</option><option>Samsung Galaxy Tab</option><option>Lenovo Tab</option><option>Huawei MediaPad</option><option>Amazon Fire HD</option>
+      </optgroup>
+      <optgroup label="Imprimantes">
+        <option>HP</option><option>Canon</option><option>Epson</option><option>Brother</option><option>Kyocera</option><option>Lexmark</option>
+      </optgroup>
+    </select>
+  </div>
+
+  <div>
+    <label>Modèle :</label>
+    <input id="modele" class="input" list="modeles">
+    <datalist id="modeles"></datalist>
+  </div>
+</div>
+
+<!-- ✅ OPTIONS TECHNIQUES -->
+<div class="options-block">
+
+  <label>Travaux prévus :</label>
+  <div class="checkbox-group">
+    <label><input type="checkbox" id="boost"> Rebooster (SSD / RAM / Windows)</label>
+    <label><input type="checkbox" id="win11"> Mise à niveau Windows 10 → Windows 11</label>
+  </div>
+
+  <label>Sauvegarde :</label>
+  <div class="radio-group">
+    <label><input type="radio" name="sauv" value="non" checked> Non</label>
+    <label><input type="radio" name="sauv" value="oui"> Oui</label>
+  </div>
+
+  <div id="sauvDetails" class="checkbox-group" style="display:none;">
+    <label><input type="checkbox" value="Documents"> Documents</label>
+    <label><input type="checkbox" value="Images"> Images</label>
+    <label><input type="checkbox" value="Vidéos"> Vidéos</label>
+    <label><input type="checkbox" value="Favoris"> Favoris</label>
+    <label><input type="checkbox" value="Mots de passe"> Mots de passe</label>
+  </div>
+</div>
+
+<label>Description du problème :</label>
+<textarea id="prob" class="textarea" rows="4"></textarea>
+
+<button class="primary" onclick="creer()">Créer la fiche</button>
+
+</div>
+
+<div class="center">
+  <a href="historique.html" class="link">📚 Voir l'historique</a>
+</div>
+
+</div>
+
+<script>
+
+// FORMAT TEL
+function formatTel(){
+  let v = tel.value.replace(/\D/g,"").slice(0,10);
+  tel.value = v.replace(/(..)(?=.)/g,"$1-");
+}
+
+// IMPORT CSV
+function importerCSV(){
+  let file = csv.files[0]; if(!file) return alert("Sélectionne un fichier CSV");
+  let r=new FileReader();
+  r.onload=e=>{
+    let clients=e.target.result.split("\n").map(l=>{let c=l.split(";");return{nom:c[1]?.trim(),tel:c[5]?.trim()}});
+    clients=clients.filter(x=>x.nom&&x.tel);
+    localStorage.setItem("clients",JSON.stringify(clients));
+    alert("✅ Base clients importée !");
+  };
+  r.readAsText(file,"UTF-8");
+}
+
+// SUGGESTION
+function rechercherClient(){
+  let s=search.value.toLowerCase(),d=JSON.parse(localStorage.getItem("clients")||"[]");
+  suggest.innerHTML="";suggest.style.display="none";if(s.length<2)return;
+  d.filter(x=>x.nom.toLowerCase().includes(s)).forEach(c=>{
+    suggest.innerHTML+=`<div class="sug" onclick='nom.value="${c.nom}";tel.value="${c.tel}";suggest.style.display="none"'>${c.nom} — ${c.tel}</div>`;
+  });
+  suggest.style.display="block";
+}
+
+// BOUTON AJOUT CLIENT
+function verifierClient(){
+  let base=JSON.parse(localStorage.getItem("clients")||"[]");
+  btnAddClient.style.display = base.some(c=>c.nom.toLowerCase()==nom.value.toLowerCase()&&c.tel==tel.value)?"none":"inline-block";
+}
+function ajouterClient(){
+  let base=JSON.parse(localStorage.getItem("clients")||"[]");
+  base.push({nom:nom.value.trim(),tel:tel.value.trim()});
+  localStorage.setItem("clients",JSON.stringify(base));
+  btnAddClient.style.display="none";alert("✅ Client ajouté !");
+}
+
+// MODELES AUTO
+const modelesParMarque={
+  "Acer":["Aspire","Extensa","Nitro","Predator","Swift","TravelMate"],
+  "Asus":["VivoBook","ROG","TUF","ZenBook","ExpertBook"],
+  "Dell":["Inspiron","Latitude","Vostro","XPS","Precision","Alienware"],
+  "HP":["Pavilion","Envy","ProBook","EliteBook","Omen","Victus","Spectre"],
+  "Lenovo":["IdeaPad","ThinkPad","Legion","Yoga","ThinkBook"],
+  "Apple (iPhone)":["iPhone SE","iPhone 8","iPhone X","iPhone 11","iPhone 12","iPhone 13","iPhone 14"],
+  "Samsung":["Galaxy A","Galaxy S","Galaxy Note","Galaxy Z Fold","Galaxy Z Flip"]
+};
+marque.addEventListener("change",()=>{
+  modeles.innerHTML="";
+  (modelesParMarque[marque.value]||[]).forEach(m=>modeles.innerHTML+=`<option value="${m}">`);
+});
+
+// AFFICHAGE DETAILS SAUVEGARDE
+document.querySelectorAll("input[name='sauv']").forEach(r=>{
+  r.addEventListener("change",()=>{sauvDetails.style.display=(r.value==="oui")?"block":"none";});
+});
+
+// CREATION FICHE
+function creer(){
+  if(!nom.value.trim())return alert("Nom manquant");
+  if(!tel.value.trim())return alert("Téléphone manquant");
+
+  let base=JSON.parse(localStorage.getItem("clients")||"[]");
+  if(!base.some(c=>c.nom.toLowerCase()==nom.value.toLowerCase()&&c.tel==tel.value)){
+    base.push({nom:nom.value.trim(),tel:tel.value.trim()});
+    localStorage.setItem("clients",JSON.stringify(base));
+  }
+
+  let sauvegarde=document.querySelector("input[name='sauv']:checked").value;
+  let sauvItems=[];
+  if(sauvegarde==="oui"){
+    sauvDetails.querySelectorAll("input:checked").forEach(c=>sauvItems.push(c.value));
+  }
+
+  let h=JSON.parse(localStorage.getItem("historique")||"[]");
+  h.push({
+    id:Date.now(),nom:nom.value,tel:tel.value,type:type.value,
+    marque:marque.value,modele:modele.value,probleme:prob.value,
+    boost:boost.checked,win11:win11.checked,
+    sauvegarde:sauvegarde,sauvegardeElements:sauvItems,
+    date:new Date().toLocaleDateString()
+  });
+  localStorage.setItem("historique",JSON.stringify(h));
+  location.href="historique.html";
+}
+
+</script>
+
+</body>
+</html>
