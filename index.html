@@ -4,8 +4,7 @@
 <meta charset="UTF-8">
 <title>Fiche de Dépôt - sosordi03</title>
 <link rel="stylesheet" href="style.css">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 </head>
 <body>
 
@@ -27,60 +26,78 @@
   <div>
     <label>Nom du client :</label>
     <input id="nom" class="input" oninput="this.value = this.value.toUpperCase()">
-
   </div>
   <div>
     <label>Téléphone :</label>
     <input id="tel" class="input" maxlength="14" oninput="formatTel();verifierClient();">
-    <button id="btnAddClient" class="secondary small-btn" style="display:none;" onclick="ajouterClient()">➕ Ajouter ce client à la base</button>
+    <button id="btnAddClient" class="secondary small-btn" style="display:none;" onclick="ajouterClient()">➕ Ajouter ce client</button>
   </div>
 </div>
 
+<!-- ✅ Bloc Appareil -->
+<div class="options-block">
+
+<label>Appareil à ajouter :</label>
+
 <div class="grid-3">
   <div>
-    <label>Type d’appareil :</label>
+    <label>Type :</label>
     <select id="type" class="input">
       <option>Ordinateur Portable</option>
       <option>Ordinateur Fixe</option>
-      <option>Smartphone</option>
       <option>Tablette</option>
+      <option>Disque dur externe</option>
+      <option>Écran</option>
+      <option>Imprimante</option>
+      <option>Autre</option>
     </select>
   </div>
 
   <div>
     <label>Marque :</label>
-    <select id="marque" class="input">
-      <optgroup label="Ordinateurs">
-        <option>Acer</option><option>Asus</option><option>Dell</option><option>HP</option><option>Lenovo</option><option>MSI</option><option>Gigabyte</option><option>Medion</option><option>Toshiba</option><option>Packard Bell</option><option>Samsung</option><option>Apple (Mac)</option>
-      </optgroup>
-      <optgroup label="Smartphones">
-        <option>Apple (iPhone)</option><option>Samsung</option><option>Huawei</option><option>Xiaomi / Redmi / Poco</option><option>Oppo</option><option>OnePlus</option><option>Google Pixel</option><option>Honor</option><option>Motorola</option><option>Nokia</option><option>Sony Xperia</option>
-      </optgroup>
-      <optgroup label="Tablettes">
-        <option>Apple (iPad)</option><option>Samsung Galaxy Tab</option><option>Lenovo Tab</option><option>Huawei MediaPad</option><option>Amazon Fire HD</option>
-      </optgroup>
-      <optgroup label="Imprimantes">
-        <option>HP</option><option>Canon</option><option>Epson</option><option>Brother</option><option>Kyocera</option><option>Lexmark</option>
-      </optgroup>
-    </select>
+    <select id="marque" class="input"></select>
   </div>
 
   <div>
     <label>Modèle :</label>
-    <input id="modele" class="input" list="modeles">
-    <datalist id="modeles"></datalist>
+    <input id="modele" class="input">
   </div>
 </div>
 
-<!-- ✅ OPTIONS TECHNIQUES -->
+<!-- Capacité Disque Dur -->
+<div id="capBloc" style="display:none;">
+  <label>Capacité :</label>
+  <select id="capacite" class="input">
+    <option>500 Go</option>
+    <option>1 To</option>
+    <option>2 To</option>
+    <option>4 To</option>
+    <option>5 To</option>
+    <option>8 To</option>
+  </select>
+</div>
+
+<!-- Taille Écran -->
+<div id="tailleBloc" style="display:none;">
+  <label>Taille (pouces) :</label>
+  <select id="taille" class="input">
+    <option>22"</option>
+    <option>24"</option>
+    <option>27"</option>
+    <option>32"</option>
+    <option>34"</option>
+  </select>
+</div>
+
+<button class="secondary small-btn" onclick="ajouterAppareil()">➕</button>
+
+</div>
+
+<!-- ✅ Liste Appareils -->
+<div id="listeAppareils" style="white-space:pre-line; font-size:16px;"></div>
+
+<!-- ✅ Sauvegarde -->
 <div class="options-block">
-
-  <label>Travaux prévus :</label>
-  <div class="checkbox-group">
-    <label><input type="checkbox" id="boost"> Rebooster (SSD / RAM / Windows)</label>
-    <label><input type="checkbox" id="win11"> Mise à niveau Windows 10 → Windows 11</label>
-  </div>
-
   <label>Sauvegarde :</label>
   <div class="radio-group">
     <label><input type="radio" name="sauv" value="non" checked> Non</label>
@@ -111,13 +128,13 @@
 
 <script>
 
-// FORMAT TEL
+// Format téléphone
 function formatTel(){
   let v = tel.value.replace(/\D/g,"").slice(0,10);
   tel.value = v.replace(/(..)(?=.)/g,"$1-");
 }
 
-// IMPORT CSV
+// CSV import
 function importerCSV(){
   let file = csv.files[0]; if(!file) return alert("Sélectionne un fichier CSV");
   let r=new FileReader();
@@ -130,7 +147,7 @@ function importerCSV(){
   r.readAsText(file,"UTF-8");
 }
 
-// SUGGESTION
+// Suggestion clients
 function rechercherClient(){
   let s=search.value.toLowerCase(),d=JSON.parse(localStorage.getItem("clients")||"[]");
   suggest.innerHTML="";suggest.style.display="none";if(s.length<2)return;
@@ -140,7 +157,7 @@ function rechercherClient(){
   suggest.style.display="block";
 }
 
-// BOUTON AJOUT CLIENT
+// Vérification auto
 function verifierClient(){
   let base=JSON.parse(localStorage.getItem("clients")||"[]");
   btnAddClient.style.display = base.some(c=>c.nom.toLowerCase()==nom.value.toLowerCase()&&c.tel==tel.value)?"none":"inline-block";
@@ -149,52 +166,96 @@ function ajouterClient(){
   let base=JSON.parse(localStorage.getItem("clients")||"[]");
   base.push({nom:nom.value.trim(),tel:tel.value.trim()});
   localStorage.setItem("clients",JSON.stringify(base));
-  btnAddClient.style.display="none";alert("✅ Client ajouté !");
+  btnAddClient.style.display="none";
+  alert("✅ Client ajouté !");
 }
 
-// MODELES AUTO
-const modelesParMarque={
-  "Acer":["Aspire","Extensa","Nitro","Predator","Swift","TravelMate"],
-  "Asus":["VivoBook","ROG","TUF","ZenBook","ExpertBook"],
-  "Dell":["Inspiron","Latitude","Vostro","XPS","Precision","Alienware"],
-  "HP":["Pavilion","Envy","ProBook","EliteBook","Omen","Victus","Spectre"],
-  "Lenovo":["IdeaPad","ThinkPad","Legion","Yoga","ThinkBook"],
-  "Apple (iPhone)":["iPhone SE","iPhone 8","iPhone X","iPhone 11","iPhone 12","iPhone 13","iPhone 14"],
-  "Samsung":["Galaxy A","Galaxy S","Galaxy Note","Galaxy Z Fold","Galaxy Z Flip"]
+// Marques auto
+const marquesParType = {
+  "Ordinateur Portable": ["Acer","Asus","Dell","HP","Lenovo","MSI","Gigabyte","Medion","Toshiba","Packard Bell","Samsung","Apple (Mac)"],
+  "Ordinateur Fixe": ["Assemblé","Dell","HP","Lenovo","Acer","Asus","MSI"],
+  "Tablette": ["Apple (iPad)","Samsung Galaxy Tab","Lenovo Tab","Huawei MediaPad","Amazon Fire HD"],
+  "Disque dur externe": ["Seagate","Western Digital (WD)","Toshiba","LaCie","Samsung"],
+  "Écran": ["Samsung","LG","AOC","Iiyama","Asus","BenQ","HP","Dell","MSI"],
+  "Imprimante": ["HP","Canon","Epson","Brother","Kyocera","Lexmark"],
+  "Autre": []
 };
-marque.addEventListener("change",()=>{
-  modeles.innerHTML="";
-  (modelesParMarque[marque.value]||[]).forEach(m=>modeles.innerHTML+=`<option value="${m}">`);
-});
 
-// AFFICHAGE DETAILS SAUVEGARDE
+function majMarques(){
+  marque.innerHTML = "";
+  let liste = marquesParType[type.value] || [];
+  if(liste.length === 0){ marque.innerHTML = '<option>Non spécifié</option>'; return; }
+  liste.forEach(m => marque.innerHTML += `<option>${m}</option>`);
+}
+type.addEventListener("change", majMarques);
+majMarques();
+
+function majChamps(){
+  capBloc.style.display = (type.value==="Disque dur externe") ? "block" : "none";
+  tailleBloc.style.display = (type.value==="Écran") ? "block" : "none";
+}
+type.addEventListener("change", majChamps);
+majChamps();
+
+// Tableau appareils
+let appareils = [];
+
+function ajouterAppareil(){
+  appareils.push({
+    type:type.value,
+    marque:marque.value,
+    modele:modele.value,
+    capacite:(type.value==="Disque dur externe")?capacite.value:"",
+    taille:(type.value==="Écran")?taille.value:""
+  });
+  afficherAppareils();
+  modele.value="";
+}
+
+function supprimerAppareil(i){
+  appareils.splice(i,1);
+  afficherAppareils();
+}
+
+function afficherAppareils(){
+  listeAppareils.innerHTML = appareils.map((a,i)=>
+`<div style="padding:8px 0;border-bottom:1px solid #dce3eb;">
+<strong>${a.type}</strong><br>
+Marque : ${a.marque}
+${a.modele?"<br>Modèle : "+a.modele:""}
+${a.capacite?"<br>Capacité : "+a.capacite:""}
+${a.taille?"<br>Taille : "+a.taille:""}
+<br><button class="danger small-btn" onclick="supprimerAppareil(${i})">🗑 Retirer</button>
+</div>`
+  ).join("");
+}
+
+// Sauvegarde
 document.querySelectorAll("input[name='sauv']").forEach(r=>{
   r.addEventListener("change",()=>{sauvDetails.style.display=(r.value==="oui")?"block":"none";});
 });
 
-// CREATION FICHE
+// Enregistrement fiche
 function creer(){
   if(!nom.value.trim())return alert("Nom manquant");
   if(!tel.value.trim())return alert("Téléphone manquant");
+  if(appareils.length===0)return alert("Ajoute au moins un appareil");
 
-  let base=JSON.parse(localStorage.getItem("clients")||"[]");
-  if(!base.some(c=>c.nom.toLowerCase()==nom.value.toLowerCase()&&c.tel==tel.value)){
-    base.push({nom:nom.value.trim(),tel:tel.value.trim()});
-    localStorage.setItem("clients",JSON.stringify(base));
-  }
-
-  let sauvegarde=document.querySelector("input[name='sauv']:checked").value;
+  let sauv=document.querySelector("input[name='sauv']:checked").value;
   let sauvItems=[];
-  if(sauvegarde==="oui"){
+  if(sauv==="oui"){
     sauvDetails.querySelectorAll("input:checked").forEach(c=>sauvItems.push(c.value));
   }
 
   let h=JSON.parse(localStorage.getItem("historique")||"[]");
   h.push({
-    id:Date.now(),nom:nom.value,tel:tel.value,type:type.value,
-    marque:marque.value,modele:modele.value,probleme:prob.value,
-    boost:boost.checked,win11:win11.checked,
-    sauvegarde:sauvegarde,sauvegardeElements:sauvItems,
+    id:Date.now(),
+    nom:nom.value,
+    tel:tel.value,
+    appareils:appareils,
+    probleme:prob.value,
+    sauvegarde:sauv,
+    sauvegardeElements:sauvItems,
     date:new Date().toLocaleDateString()
   });
   localStorage.setItem("historique",JSON.stringify(h));
@@ -205,5 +266,3 @@ function creer(){
 
 </body>
 </html>
-
-
