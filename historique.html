@@ -2,122 +2,124 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Historique des fiches</title>
+<title>Historique - sosordi03</title>
 <link rel="stylesheet" href="style.css">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 </head>
 <body>
 
 <div class="container">
 
-<h1>📚 Historique des fiches</h1>
+<h1>📚 Historique des dépôts</h1>
 
-<div class="card">
-
-<table class="table">
-<thead>
-<tr>
-  <th>Client</th>
-  <th>Appareil</th>
-  <th>Date</th>
-  <th>Actions</th>
-</tr>
-</thead>
-
-<tbody id="list"></tbody>
-</table>
-
-</div>
+<div class="card" id="list"></div>
 
 <div class="center">
-  <a class="link" href="index.html">← Retour</a>
+  <a href="index.html" class="link">⬅ Retour</a>
 </div>
 
-</div>
-
-<!-- ✅ MODALE -->
-<div id="modal" class="modal">
-  <div class="modal-content">
-    <h2>Détails de la fiche</h2>
-
-    <div id="modal-details"></div>
-
-    <div class="modal-buttons">
-      <button class="primary" onclick="window.print()">🖨️ Imprimer</button>
-      <button class="secondary" onclick="fermerModal()">✖ Fermer</button>
-    </div>
-  </div>
 </div>
 
 <script>
-// AFFICHAGE HISTORIQUE
-let h = JSON.parse(localStorage.getItem("historique") || "[]");
-function afficher(){
-  list.innerHTML="";
-  h.forEach(f=>{
-    list.innerHTML+=`
-    <tr>
-      <td>
-        <strong>${f.nom}</strong><br>
-        📞 <a href="tel:${f.tel}" class="phone">${f.tel}</a>
-      </td>
-      <td>${f.marque} ${f.modele || ""}</td>
-      <td>${f.date}</td>
-      <td>
-        <button class="primary small-btn" onclick="voir(${f.id})">👁️ Voir</button>
-        <button class="danger small-btn" onclick="supprimer(${f.id})">🗑️ Supprimer</button>
-      </td>
-    </tr>`;
-  });
-}
-afficher();
 
-// SUPPRESSION FICHE
-function supprimer(id){
-  if(!confirm("Supprimer cette fiche ?"))return;
-  h = h.filter(f=>f.id!==id);
+// Charger l'historique
+let h = JSON.parse(localStorage.getItem("historique")||"[]");
+
+// ✅ Conversion anciennes fiches → nouveau format
+let modif = false;
+
+h = h.map(f => {
+
+  // Si déjà multi-appareils → on garde
+  if (Array.isArray(f.appareils)) return f;
+
+  // Sinon → convertir ancien format en nouveau
+  modif = true;
+  return {
+    id: f.id,
+    nom: f.nom,
+    tel: f.tel,
+    appareils: [{
+      type: f.type || "Non précisé",
+      marque: f.marque || "Non précisé",
+      modele: f.modele || "",
+      capacite: f.capacite || "",
+      taille: f.taille || ""
+    }],
+    probleme: f.probleme || "",
+    sauvegarde: f.sauvegarde || "non",
+    sauvegardeElements: f.sauvegardeElements || [],
+    date: f.date || new Date().toLocaleDateString()
+  };
+});
+
+// ✅ Sauvegarde après conversion (1 seule fois)
+if(modif){
   localStorage.setItem("historique", JSON.stringify(h));
-  afficher();
 }
 
-// MODALE
-function voir(id){
-  let f = h.find(x=>x.id===id);
-
-  let b = f.boost ? "✅ Rebooster SSD / RAM / Windows" : "❌ Rebooster";
-  let w = f.win11 ? "✅ Mise à niveau Windows 10 → Windows 11" : "❌ Mise à niveau Windows 11";
-  let s = (f.sauvegarde==="oui") ? 
-    "✅ Sauvegarde : " + f.sauvegardeElements.join(", ") :
-    "❌ Sauvegarde";
-
-  document.getElementById("modal-details").innerHTML = `
-    <p style="text-align:right; font-weight:600;">📅 ${f.date}</p>
-
-    <p><strong>Client :</strong> ${f.nom}</p>
-    <p><strong>Téléphone :</strong> ${f.tel}</p>
-
-    <p><strong>Appareil :</strong> ${f.type}</p>
-    <p><strong>Marque :</strong> ${f.marque}</p>
-    <p><strong>Modèle :</strong> ${f.modele}</p>
-
-    <hr>
-
-    <p><strong>Travaux demandés :</strong></p>
-    <p>${b}</p>
-    <p>${w}</p>
-    <p>${s}</p>
-
-    <hr>
-
-    <p><strong>Description :</strong></p>
-    <p>${f.probleme || "Aucune"}</p>
-  `;
-
-  modal.style.display="flex";
+// S'il n'y a rien → message
+if(h.length === 0){
+  list.innerHTML = "<p>Aucune fiche pour le moment.</p>";
 }
 
-function fermerModal(){
-  modal.style.display="none";
+// Afficher les fiches en accordéon
+list.innerHTML = h.map((f,i)=>`
+
+<div class="options-block" style="padding:14px;border-radius:10px;">
+
+  <div onclick="toggle(${i})" style="display:flex;justify-content:space-between;cursor:pointer;">
+    <div>
+      <strong>${f.nom}</strong> — ${f.tel}<br>
+      <span style="font-size:14px;color:#555;">${f.date}</span>
+    </div>
+    <div style="font-size:22px;">⮟</div>
+  </div>
+
+  <div id="content-${i}" style="display:none;margin-top:10px;font-size:16px;line-height:1.5;">
+
+    <label>Appareils déposés :</label><br><br>
+
+    ${f.appareils.map(a=>`
+<strong>${a.type}</strong><br>
+Marque : ${a.marque}
+${a.modele ? "<br>Modèle : "+a.modele : ""}
+${a.capacite ? "<br>Capacité : "+a.capacite : ""}
+${a.taille ? "<br>Taille : "+a.taille : ""}
+<br><br>
+`).join("")}
+
+    <label>Problème signalé :</label><br>
+    ${f.probleme || "(Non précisé)"}<br><br>
+
+    <label>Sauvegarde :</label> ${f.sauvegarde === "oui" ? "Oui" : "Non"}<br>
+    ${f.sauvegardeElements && f.sauvegardeElements.length>0 ? "Éléments : "+f.sauvegardeElements.join(", ") : ""}
+
+    <br><br>
+
+    <button class="danger small-btn" onclick="supprimer(${f.id})">🗑 Supprimer la fiche</button>
+
+  </div>
+
+</div>
+
+`).join("");
+
+// Accordéon
+function toggle(i){
+  let c=document.getElementById("content-"+i);
+  c.style.display = (c.style.display==="none") ? "block" : "none";
 }
+
+// Supprimer une fiche
+function supprimer(id){
+  if(!confirm("Supprimer cette fiche ?")) return;
+  let h=JSON.parse(localStorage.getItem("historique")||"[]");
+  h=h.filter(e=>e.id!==id);
+  localStorage.setItem("historique",JSON.stringify(h));
+  location.reload();
+}
+
 </script>
 
 </body>
