@@ -1,21 +1,91 @@
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:"Segoe UI",Arial;background:#e9edf3;padding:40px 15px;display:flex;justify-content:center;}
-.container{width:100%;max-width:900px;}
+
+/* --- PLEIN ÉCRAN --- */
+html, body {
+  height: 100%;
+}
+
+body{
+  font-family:"Segoe UI",Arial;
+  background:#e9edf3;
+  min-height:100svh;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+}
+
+/* --- CONTAINER PLEIN ÉCRAN --- */
+.container{
+  width:100%;
+  max-width:900px;
+  min-height:100svh;
+  padding:40px 15px;
+  display:flex;
+  flex-direction:column;
+}
+
 h1{text-align:center;margin-bottom:25px;color:#143658;font-weight:600;}
 
-.input,.textarea,select{width:100%;padding:12px;border-radius:8px;border:1px solid #cdd5e0;font-size:16px;background:#f8fafc;}
-.card{background:#fff;padding:25px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.08);margin-top:25px;display:flex;flex-direction:column;gap:18px;}
+/* ✅ MODIF TACTILE : champs plus hauts */
+.input,.textarea,select{
+  width:100%;
+  padding:16px; /* ↑ était 12px */
+  border-radius:10px; /* arrondi plus doux */
+  border:1px solid #cdd5e0;
+  font-size:18px; /* ↑ meilleure lecture */
+  background:#f8fafc;
+}
+
+/* --- CARD ÉTIRÉE AVEC SCROLL --- */
+.card{
+  background:#fff;
+  padding:25px;
+  border-radius:14px;
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+  margin-top:25px;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  flex:1;
+  overflow-y:auto;
+}
 
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
 .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;}
 @media(max-width:700px){.grid-2,.grid-3{grid-template-columns:1fr;}}
 
-.primary{background:#0078d7;border:none;color:white;padding:14px;border-radius:8px;font-weight:600;cursor:pointer;font-size:17px;}
+/* ✅ MODIF TACTILE : boutons plus grands */
+.primary{
+  background:#0078d7;
+  border:none;
+  color:white;
+  padding:18px; /* ↑ était 14px */
+  border-radius:10px;
+  font-weight:600;
+  cursor:pointer;
+  font-size:19px; /* ↑ meilleure lisibilité */
+}
 .primary:hover{background:#005fa3;}
 
-.secondary{background:#5c6f82;border:none;color:white;padding:12px;border-radius:8px;font-weight:600;cursor:pointer;font-size:15px;}
+.secondary{
+  background:#5c6f82;
+  border:none;
+  color:white;
+  padding:16px; /* ↑ était 12px */
+  border-radius:10px;
+  font-weight:600;
+  cursor:pointer;
+  font-size:17px;
+}
 .secondary:hover{background:#455767;}
-.small-btn{margin-top:6px;padding:8px 12px;font-size:14px;}
+
+/* ✅ MODIF TACTILE : petits boutons ajustés */
+.small-btn{
+  margin-top:6px;
+  padding:10px 14px; /* ↑ */
+  font-size:16px; /* ↑ */
+  border-radius:8px; /* ↑ */
+}
 
 .center{text-align:center;margin-top:20px;}
 .link{text-decoration:none;font-weight:600;color:#0078d7;}
@@ -32,9 +102,14 @@ h1{text-align:center;margin-bottom:25px;color:#143658;font-weight:600;}
   background:#f4f7fb;border:1px solid #d5dcea;padding:14px;border-radius:10px;
 }
 .checkbox-group,.radio-group{
-  display:flex;flex-wrap:wrap;gap:10px 20px;margin:10px 0;
+  display:flex;flex-wrap:wrap;gap:14px 24px; /* ✅ espace doigts */
+  margin:14px 0; /* ↑ léger */
 }
-.checkbox-group label,.radio-group label{font-size:15px;cursor:pointer;}
+.checkbox-group label,.radio-group label{
+  font-size:17px; /* ↑ lisible */
+  cursor:pointer;
+}
+
 /* TABLE */
 .table{width:100%;border-collapse:collapse;}
 .table th{background:#0078d7;color:white;padding:12px;border-radius:6px 6px 0 0;}
@@ -42,7 +117,6 @@ h1{text-align:center;margin-bottom:25px;color:#143658;font-weight:600;}
 .phone{text-decoration:none;color:#0078d7;}
 .phone:hover{text-decoration:underline;}
 
-.small-btn{padding:6px 10px;font-size:14px;border-radius:6px;}
 .danger{background:#d9534f;color:white;border:none;cursor:pointer;}
 .danger:hover{background:#b0413e;}
 
