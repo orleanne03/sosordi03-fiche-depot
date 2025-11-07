@@ -325,6 +325,37 @@ h1{text-align:center;margin-bottom:25px;color:#143658;font-weight:600;}
 .accordion.open .arrow {
   transform: rotate(-180deg);
 }
+/* --- CORRECTION HISTORIQUE : 1 SEULE COLONNE --- */
+#liste {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
 
+.fiche-card {
+  width: 100% !important;
+  margin: 16px auto;
+}
+
+h1 {
+  text-align: center !important;
+  margin-bottom: 6px;
+}
+
+.center {
+  text-align: center !important;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* SUPPRESSION DE l’ANCIEN LAYOUT EN 2 COLONNES */
+.container {
+  display: block !important;
+  width: 100% !important;
+}
 .modal-buttons{display:flex;justify-content:space-between;margin-top:18px;}
 @keyframes pop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
