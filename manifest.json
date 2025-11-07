@@ -1,22 +1,25 @@
 {
-  "name": "Fiche de Dépôt - SOS Ordi 03",
-  "short_name": "Fiche Dépôt",
+  "name": "Fiche de Dépôt - sosordi03",
+  "short_name": "SAV sosordi03",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0d3a66",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "icone-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "icon-512.png",
+      "src": "icone-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
 
   
+
