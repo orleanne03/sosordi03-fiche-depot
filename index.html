@@ -34,14 +34,9 @@ window.doc = doc;
 
 function toggleAccordion(el){
     el.parentNode.classList.toggle("open");
-  }
-  window.toggleAccordion = toggleAccordion;
+}
+window.toggleAccordion = toggleAccordion;
 </script>
-
-<style>
-/* Style rapidos pour bloc carte mobile */
-.card-block { background:#f6f9fc;padding:12px;border-radius:8px;margin-top:12px;border:1px solid #d8e0e8; }
-</style>
 
 </head>
 <body>
@@ -50,8 +45,12 @@ function toggleAccordion(el){
 
 <h1>🖥️ Fiche de Dépôt - sosordi03</h1>
 
-<input type="text" id="search" class="input" placeholder="🔍 Rechercher un client..." oninput="rechercherClient()">
-<div id="suggest" class="suggest-box"></div>
+<!-- ✅ Recherche client + bouton Ajouter -->
+<div style="position:relative;">
+  <input type="text" id="search" class="input" placeholder="🔍 Rechercher un client..." oninput="rechercherClient()">
+  <div id="suggest" class="suggest-box"></div>
+  <button id="addClientBtn" class="secondary small-btn" style="display:none;margin-top:6px;" onclick="ajouterClient()">➕ Ajouter ce client</button>
+</div>
 
 <div class="card">
 
@@ -61,7 +60,7 @@ function toggleAccordion(el){
 <label>Téléphone :</label>
 <input id="tel" class="input" maxlength="14" oninput="formatTel();">
 
-<!-- ✅ Bloc Appareils en PREMIER (mobile ok) -->
+<!-- ✅ Bloc Appareils -->
 <div class="card-block">
 <label>Ajouter un appareil :</label>
 
@@ -90,7 +89,6 @@ function toggleAccordion(el){
   </div>
 </div>
 
-
 <button class="secondary small-btn" onclick="ajouterAppareil()">➕ Ajouter cet appareil</button>
 <div id="listeAppareils"></div>
 </div>
@@ -108,7 +106,6 @@ function toggleAccordion(el){
   <label><input type="checkbox" name="sauv-item" value="Favoris"> Favoris</label><br>
   <label><input type="checkbox" name="sauv-item" value="Mots de passe"> Mots de passe</label><br>
 </div>
-
 </div>
 
 <!-- ✅ Travaux -->
@@ -120,7 +117,7 @@ function toggleAccordion(el){
 
   <div class="accordion-content">
     <div class="checkbox-group">
-      <label><input type="checkbox" class="trav" value="Migration Windows 11"> Migration vers Windows 11</label>
+      <label><input type="checkbox" class="trav" value="Migration Windows 11"> Migration Windows 11</label>
       <label><input type="checkbox" class="trav" value="Réinstallation complète Windows"> Réinstallation complète Windows</label>
       <label><input type="checkbox" class="trav" value="Nettoyage système + Optimisation"> Nettoyage système + Optimisation</label>
       <label><input type="checkbox" class="trav" value="Suppression virus / malwares"> Suppression virus / malwares</label>
@@ -131,8 +128,6 @@ function toggleAccordion(el){
     </div>
   </div>
 </div>
-
-  
 
 <label>Description du problème :</label>
 <textarea id="prob" class="textarea" rows="4"></textarea>
@@ -148,130 +143,100 @@ function toggleAccordion(el){
 </div>
 
 <script>
-// ----------------------------------------------------------
-// FORMAT TÉLÉPHONE
+// ✅ Format téléphone
 function formatTel(){ let v = tel.value.replace(/\D/g,"").slice(0,10); tel.value = v.replace(/(..)(?=.)/g,"$1-"); }
 
-// ----------------------------------------------------------
-// RECHERCHE CLIENT
+// ✅ Recherche client + bouton Ajouter
 async function rechercherClient(){
   let val = search.value.trim().toUpperCase();
-  suggest.innerHTML = ""; if(val.length < 2) return;
-  let q = query(collection(db, "clients"), orderBy("nom"), startAt(val), endAt(val + "\uf8ff"));
-  let snap = await getDocs(q);
-  snap.forEach(doc=>{ let c = doc.data(); suggest.innerHTML += `<div class="sug" onclick='remplirClient("${c.nom}","${c.tel}")'>${c.nom} — ${c.tel}</div>`; });
-  suggest.style.display = "block";
-}
-function remplirClient(n,t){ nom.value = n; tel.value = t; suggest.style.display = "none"; }
+  suggest.innerHTML=""; document.getElementById("addClientBtn").style.display="none";
 
-// ----------------------------------------------------------
-// APPAREILS
-let appareils = [];
-function ajouterAppareil(){
-  appareils.push({ type:type.value, marque:marque.value, modele:modele.value });
-  afficherAppareils(); modele.value="";
+  if(val.length < 2) return;
+
+  let q = query(collection(db,"clients"), orderBy("nom"), startAt(val), endAt(val+"\uf8ff"));
+  let snap = await getDocs(q);
+
+  let found = false;
+  snap.forEach(doc=>{
+    found = true;
+    let c = doc.data();
+    suggest.innerHTML += `<div class="sug" onclick='remplirClient("${c.nom}","${c.tel}")'>${c.nom} — ${c.tel}</div>`;
+  });
+
+  suggest.style.display="block";
+  if(!found) document.getElementById("addClientBtn").style.display="block";
 }
+
+function remplirClient(n,t){ nom.value=n; tel.value=t; suggest.style.display="none"; }
+
+// ✅ Ajouter client dans Firestore
+async function ajouterClient(){
+  if(!search.value.trim()) return;
+  await addDoc(collection(db,"clients"),{ nom: search.value.toUpperCase(), tel:"" });
+  nom.value = search.value.toUpperCase();
+  suggest.style.display="none";
+  document.getElementById("addClientBtn").style.display="none";
+  alert("✅ Client ajouté !");
+}
+
+// ✅ Appareils
+let appareils=[];
+function ajouterAppareil(){ appareils.push({ type:type.value, marque:marque.value, modele:modele.value }); afficherAppareils(); modele.value=""; }
 function afficherAppareils(){
   listeAppareils.innerHTML = appareils.map((a,i)=>`
-  <div style="padding:6px;border-bottom:1px solid #ccc;">
-    ${a.type} — ${a.marque} ${a.modele}
-    <button class="danger small-btn" onclick="supprimerAppareil(${i})">🗑</button>
-  </div>`).join("");
+  <div style="padding:6px;border-bottom:1px solid #ccc;">${a.type} — ${a.marque} ${a.modele}
+  <button class="danger small-btn" onclick="supprimerAppareil(${i})">🗑</button></div>`).join("");
 }
 function supprimerAppareil(i){ appareils.splice(i,1); afficherAppareils(); }
 
-// ----------------------------------------------------------
-// AFFICHAGE OPTIONS SAUVEGARDE
-document.querySelectorAll('input[name="sauv"]').forEach(r=>{
-  r.onchange = ()=>{ optionsSauvegarde.style.display = (r.value==="Oui")?"block":"none"; };
-});
+// ✅ Sauvegarde
+document.querySelectorAll('input[name="sauv"]').forEach(r=>r.onchange = ()=>{ optionsSauvegarde.style.display=(r.value==="Oui")?"block":"none"; });
 
-// ----------------------------------------------------------
-// CRÉATION FICHE (avec auto-ajout client)
+// ✅ Création fiche
 async function creer(){
   if(!nom.value.trim()) return alert("Nom manquant");
   if(!tel.value.trim()) return alert("Téléphone manquant");
-  if(appareils.length === 0) return alert("Ajoute au moins un appareil");
+  if(appareils.length===0) return alert("Ajoute au moins un appareil");
 
-// ✅ Sauvegarde Oui/Non
-let sauvegardeChoix = document.querySelector('input[name="sauv"]:checked')?.value || "Non";
-
-// ✅ Détails sauvegarde
-let sauvItems = [...document.querySelectorAll('input[name="sauv-item"]:checked')]
-    .map(c => c.value);
-
-// ✅ Travaux cochés
-let travauxSelectionnes = [...document.querySelectorAll('.trav:checked')]
-    .map(c => c.value);
-
+  let sauvegardeChoix = document.querySelector('input[name="sauv"]:checked').value;
+  let sauvItems = [...document.querySelectorAll('input[name="sauv-item"]:checked')].map(c=>c.value);
+  let travauxSelectionnes = [...document.querySelectorAll('.trav:checked')].map(c=>c.value);
 
   await addDoc(collection(db,"fiches"),{
     nom: nom.value,
     tel: tel.value,
-    appareils: appareils,
+    appareils,
     probleme: prob.value,
     sauvegarde: sauvegardeChoix,
-    sauvegardeItems: sauvItems,           // ✅ sauvegarde détaillée
-    travaux: travauxSelectionnes,        // ✅ travaux enregistrés
+    sauvegardeItems: sauvItems,
+    travaux: travauxSelectionnes,
     date: new Date().toISOString()
   });
 
   location.href="historique.html";
 }
-// 🔥 Fermer la liste si on clique ailleurs
-document.addEventListener("click", function(e){
-  if(!e.target.closest("#search") && !e.target.closest("#suggest")){
-    suggest.style.display = "none";
-  }
-});
 
-// 🔥 Fermer si champ vide
-search.addEventListener("input", function(){
-  if(search.value.trim().length < 2){
-    suggest.style.display = "none";
-  }
-});
+// ✅ Fermeture auto liste
+document.addEventListener("click", (e)=>{ if(!e.target.closest("#search") && !e.target.closest("#suggest")) suggest.style.display="none"; });
+search.addEventListener("input", ()=>{ if(search.value.trim().length<2) suggest.style.display="none"; });
+document.addEventListener("keydown",(e)=>{ if(e.key==="Escape") suggest.style.display="none"; });
 
-// 🔥 Fermer avec Échap
-document.addEventListener("keydown", function(e){
-  if(e.key === "Escape"){
-    suggest.style.display = "none";
-  }
-});
-
+// ✅ Marques auto
+const marquesParType={
+  "Ordinateur Portable":["Acer","Asus","HP","Lenovo","Dell","MSI","Apple","Samsung","Toshiba","Autre"],
+  "Ordinateur Fixe":["Assembler","Acer","Asus","HP","Dell","Lenovo","Autre"],
+  "Tablette":["Apple","Samsung","Lenovo","Huawei","Microsoft Surface","Autre"],
+  "Disque dur externe":["Seagate","Western Digital","Toshiba","Samsung","LaCie","Autre"],
+  "Écran":["Samsung","LG","AOC","Iiyama","Philips","Dell","Asus","Autre"],
+  "Imprimante":["HP","Canon","Epson","Brother","Lexmark","Samsung","Autre"],
+  "Autre":["Autre"]
+};
+function majMarques(){
+  marque.innerHTML="";
+  marquesParType[type.value].forEach(m=>marque.innerHTML+=`<option>${m}</option>`);
+}
+majMarques();
 </script>
-<script>
-  const marquesParType = {
-    "Ordinateur Portable": ["Acer","Asus","HP","Lenovo","Dell","MSI","Apple","Samsung","Toshiba","Autre"],
-    "Ordinateur Fixe": ["Assembler","Acer","Asus","HP","Dell","Lenovo","Autre"],
-    "Tablette": ["Apple","Samsung","Lenovo","Huawei","Microsoft Surface","Autre"],
-    "Disque dur externe": ["Seagate","Western Digital","Toshiba","Samsung","LaCie","Autre"],
-    "Écran": ["Samsung","LG","AOC","Iiyama","Philips","Dell","Asus","Autre"],
-    "Imprimante": ["HP","Canon","Epson","Brother","Lexmark","Samsung","Autre"],
-    "Autre": ["Autre"]
-  };
-  
-  function majMarques(){
-    let type = document.getElementById("type").value;
-    let select = document.getElementById("marque");
-    select.innerHTML = "";
-  
-    marquesParType[type].forEach(m=>{
-      let opt = document.createElement("option");
-      opt.textContent = m;
-      select.appendChild(opt);
-    });
-  }
-  
-  majMarques(); // initialise au chargement
-  
-  // Si "Autre" est choisi → champ texte libre
-  document.getElementById("marque").addEventListener("change", function(){
-    if(this.value === "Autre"){
-      this.outerHTML = '<input id="marque" class="input" placeholder="Saisir la marque">';
-    }
-  });
-  </script>
-  
+
 </body>
 </html>
