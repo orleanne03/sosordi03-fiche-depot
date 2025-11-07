@@ -8,10 +8,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { 
-  getFirestore, collection, getDocs, orderBy, query,
-  deleteDoc, doc
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAR8PVlerANOGdzNBwZjj81I6Ajtbn63eI",
@@ -22,15 +19,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ✅ SUPPRESSION D'UNE FICHE
-async function supprimerFiche(id) {
-  if(!confirm("Voulez-vous supprimer cette fiche ?")) return;
-  await deleteDoc(doc(db, "fiches", id));
-  location.reload(); // recharge la page
-}
-window.supprimerFiche = supprimerFiche;
-
-// ✅ CHARGEMENT DES FICHES
 async function load(){
   let snap = await getDocs(query(collection(db,"fiches"), orderBy("date","desc")));
   let zone = document.getElementById("liste");
@@ -38,88 +26,63 @@ async function load(){
   snap.forEach(d=>{
     let f = d.data();
     let appareils = f.appareils.map(a=>`• ${a.type} — ${a.marque} ${a.modele}`).join("<br>");
-    let travaux = (f.travaux?.length) 
-  ? f.travaux.map(t => `<li>${t}</li>`).join("") 
-  : "<li>Aucun</li>";
+    // travaux : si tableau -> afficher chaque item sur une ligne (ce que tu demandais)
+    let travauxHtml = "Aucun";
+    if(Array.isArray(f.travaux) && f.travaux.length){
+      travauxHtml = "<ul style='margin:6px 0 0 16px;padding:0;'>";
+      f.travaux.forEach(t=>{
+        travauxHtml += `<li style="margin:4px 0;list-style:disc;">${t}</li>`;
+      });
+      travauxHtml += "</ul>";
+    }
 
-    let sauvegarde = (f.sauvegarde === "Oui") ? `Oui (${f.sauvegardeItems.join(", ")})` : "Non";
+    let sauvegarde = (f.sauvegarde==="Oui") ? `Oui (${(f.sauvegardeItems||[]).join(", ")})` : `Non`;
+
+    // Password (affiché si présent)
+    let pwdHtml = "";
+    if(f.password){
+      pwdHtml = `<p>🔐 <strong>Mot de passe :</strong> ${f.password}</p>`;
+    }
 
     zone.innerHTML += `
-      <div class="fiche-card">
-        <button class="delete-btn" onclick="supprimerFiche('${d.id}')">🗑</button>
+<div class="fiche-card" style="max-width:720px;">
+  <h3>${f.nom} — ${f.tel}</h3>
+  <small>📅 ${new Date(f.date).toLocaleDateString()}</small>
 
-        <h3>${f.nom} — ${f.tel}</h3>
-        <small>📅 ${new Date(f.date).toLocaleDateString()}</small>
-
-        <p>${appareils.replace(/•/g, "💻")}</p>
-        <p>💾 Sauvegarde : <strong>${sauvegarde}</strong></p>
-        <p>🔧 Travaux :</p>
-<ul style="margin:4px 0 8px 0; padding-left:20px;">
-  ${travaux}
-</ul>
-
-        <p>📝 <strong>Problème :</strong> ${f.probleme}</p>
-      </div>
-    `;
+  <p>${appareils.replace(/•/g, "💻")}</p>
+  <p>💾 <strong>Sauvegarde :</strong> ${sauvegarde}</p>
+  <p>🔧 <strong>Travaux :</strong></p>
+  ${travauxHtml}
+  ${pwdHtml}
+  <p>📝 <strong>Problème :</strong> ${f.probleme || ""}</p>
+</div>`;
   });
 }
 load();
 </script>
 
 <style>
-/* ✅ Une seule colonne propre */
-
-#liste {
-  max-width: 700px;
-  
-  display: flex;
-  flex-direction: column;
-  gap: 22px;
-}
-
-/* Carte plus clean */
+body{font-family:"Segoe UI",Arial;background:#e9edf3;padding:24px;}
+h1{color:#143658;font-size:28px;margin-bottom:8px;}
+.center{text-align:center;margin:14px 0;}
+.link{text-decoration:none;color:#0078d7;font-weight:600;}
 .fiche-card{
-  position: relative;
   background:#fff;
-  padding:16px 18px;
-  border-radius:12px;
+  padding:14px;
+  border-radius:10px;
   border:1px solid #d9dfe8;
-  box-shadow:0 4px 12px rgba(0,0,0,0.06);
+  margin-bottom:14px;
+  box-shadow:0 2px 6px rgba(0,0,0,0.06);
 }
-
-/* Bouton supprimer discret */
-.delete-btn{
-  position:absolute;
-  top:10px;
-  right:10px;
-  background:none;
-  border:none;
-  font-size:20px;
-  cursor:pointer;
-  opacity:.6;
-}
-.delete-btn:hover{opacity:1;}
-
-
-
-
 </style>
-</head>
 
+</head>
 <body>
 
-  <div class="container">
-  
-    <h1>📚 Historique des dépôts</h1>
-  
-    <div id="liste"></div>
-  
-    <div class="center" style="margin-top:30px;">
-      <a href="index.html" class="link">⬅ Retour</a>
-    </div>
-  
-  </div>
-  
-  </body>
-  
+<h1>📚 Historique des dépôts</h1>
+<div class="center"><a href="index.html" class="link">⬅ Retour</a></div>
+
+<div id="liste"></div>
+
+</body>
 </html>
