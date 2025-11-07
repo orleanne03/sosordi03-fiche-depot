@@ -5,6 +5,35 @@
 <title>Fiche de Dépôt - sosordi03</title>
 <link rel="stylesheet" href="style.css">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+<!-- 🔥 Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { 
+  getFirestore, collection, addDoc, getDocs, query, orderBy, startAt, endAt,
+  writeBatch, doc 
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAR8PVlerANOGdzNBwZjj81I6Ajtbn63eI",
+  authDomain: "sosordi03-sav.firebaseapp.com",
+  projectId: "sosordi03-sav"
+};
+
+
+const app = initializeApp(firebaseConfig);
+window.db = getFirestore(app);
+window.collection = collection;
+window.addDoc = addDoc;
+window.getDocs = getDocs;
+window.query = query;
+window.orderBy = orderBy;
+window.startAt = startAt;
+window.endAt = endAt;
+window.writeBatch = writeBatch;
+window.doc = doc;
+</script>
+
 </head>
 <body>
 
@@ -15,9 +44,10 @@
 <input type="text" id="search" class="input" placeholder="🔍 Rechercher un client..." oninput="rechercherClient()">
 <div id="suggest" class="suggest-box"></div>
 
+<!-- ✅ Import JSON Clients -->
 <div class="row import-row">
-  <input type="file" id="csv" accept=".csv" class="input">
-  <button class="secondary" onclick="importerCSV()">📥</button>
+  <input type="file" id="jsonImport" accept=".json" class="input">
+  <button class="secondary" onclick="importerClientsJSON()">📥 Import JSON Clients</button>
 </div>
 
 <div class="card">
@@ -29,15 +59,13 @@
   </div>
   <div>
     <label>Téléphone :</label>
-    <input id="tel" class="input" maxlength="14" oninput="formatTel();verifierClient();">
-    <button id="btnAddClient" class="secondary small-btn" style="display:none;" onclick="ajouterClient()">➕ Ajouter ce client</button>
+    <input id="tel" class="input" maxlength="14" oninput="formatTel();">
   </div>
 </div>
 
-<!-- ✅ Bloc Appareil -->
 <div class="options-block">
 
-<label>Appareil à ajouter :</label>
+<label>Ajouter un appareil :</label>
 
 <div class="grid-3">
   <div>
@@ -55,7 +83,7 @@
 
   <div>
     <label>Marque :</label>
-    <select id="marque" class="input"></select>
+    <input id="marque" class="input">
   </div>
 
   <div>
@@ -64,54 +92,12 @@
   </div>
 </div>
 
-<!-- Capacité Disque Dur -->
-<div id="capBloc" style="display:none;">
-  <label>Capacité :</label>
-  <select id="capacite" class="input">
-    <option>500 Go</option>
-    <option>1 To</option>
-    <option>2 To</option>
-    <option>4 To</option>
-    <option>5 To</option>
-    <option>8 To</option>
-  </select>
-</div>
-
-<!-- Taille Écran -->
-<div id="tailleBloc" style="display:none;">
-  <label>Taille (pouces) :</label>
-  <select id="taille" class="input">
-    <option>22"</option>
-    <option>24"</option>
-    <option>27"</option>
-    <option>32"</option>
-    <option>34"</option>
-  </select>
-</div>
-
-<button class="secondary small-btn" onclick="ajouterAppareil()">➕</button>
+<button class="secondary small-btn" onclick="ajouterAppareil()">➕ Ajouter cet appareil</button>
 
 </div>
+<ul id="liste-clients"></ul>
 
-<!-- ✅ Liste Appareils -->
-<div id="listeAppareils" style="white-space:pre-line; font-size:16px;"></div>
-
-<!-- ✅ Sauvegarde -->
-<div class="options-block">
-  <label>Sauvegarde :</label>
-  <div class="radio-group">
-    <label><input type="radio" name="sauv" value="non" checked> Non</label>
-    <label><input type="radio" name="sauv" value="oui"> Oui</label>
-  </div>
-
-  <div id="sauvDetails" class="checkbox-group" style="display:none;">
-    <label><input type="checkbox" value="Documents"> Documents</label>
-    <label><input type="checkbox" value="Images"> Images</label>
-    <label><input type="checkbox" value="Vidéos"> Vidéos</label>
-    <label><input type="checkbox" value="Favoris"> Favoris</label>
-    <label><input type="checkbox" value="Mots de passe"> Mots de passe</label>
-  </div>
-</div>
+<div id="listeAppareils"></div>
 
 <label>Description du problème :</label>
 <textarea id="prob" class="textarea" rows="4"></textarea>
@@ -128,88 +114,64 @@
 
 <script>
 
-// Format téléphone
+// ----------------------------------------------------------
+// FORMAT TÉLÉPHONE
+// ----------------------------------------------------------
 function formatTel(){
   let v = tel.value.replace(/\D/g,"").slice(0,10);
   tel.value = v.replace(/(..)(?=.)/g,"$1-");
 }
 
-// CSV import
-function importerCSV(){
-  let file = csv.files[0]; if(!file) return alert("Sélectionne un fichier CSV");
-  let r=new FileReader();
-  r.onload=e=>{
-    let clients=e.target.result.split("\n").map(l=>{let c=l.split(";");return{nom:c[1]?.trim(),tel:c[5]?.trim()}});
-    clients=clients.filter(x=>x.nom&&x.tel);
-    localStorage.setItem("clients",JSON.stringify(clients));
-    alert("✅ Base clients importée !");
-  };
-  r.readAsText(file,"UTF-8");
-}
+// ----------------------------------------------------------
+// RECHERCHE CLIENT + AUTO SUGGESTION
+// ----------------------------------------------------------
+async function rechercherClient(){
+  let val = search.value.trim().toUpperCase();
+  suggest.innerHTML = "";
+  if(val.length < 2) return;
 
-// Suggestion clients
-function rechercherClient(){
-  let s=search.value.toLowerCase(),d=JSON.parse(localStorage.getItem("clients")||"[]");
-  suggest.innerHTML="";suggest.style.display="none";if(s.length<2)return;
-  d.filter(x=>x.nom.toLowerCase().includes(s)).forEach(c=>{
-    suggest.innerHTML+=`<div class="sug" onclick='nom.value="${c.nom}";tel.value="${c.tel}";suggest.style.display="none"'>${c.nom} — ${c.tel}</div>`;
+  let q = query(
+    collection(db, "clients"),
+    orderBy("nom"),
+    startAt(val),
+    endAt(val + "\uf8ff")
+  );
+
+  let snap = await getDocs(q);
+  snap.forEach(doc=>{
+    let c = doc.data();
+    suggest.innerHTML += `<div class="sug" onclick='remplirClient("${c.nom}","${c.tel}")'>${c.nom} — ${c.tel}</div>`;
   });
-  suggest.style.display="block";
+
+  suggest.style.display = "block";
+}
+function remplirClient(n,t){
+  nom.value = n;
+  tel.value = t;
+  suggest.style.display = "none";
 }
 
-// Vérification auto
-function verifierClient(){
-  let base=JSON.parse(localStorage.getItem("clients")||"[]");
-  btnAddClient.style.display = base.some(c=>c.nom.toLowerCase()==nom.value.toLowerCase()&&c.tel==tel.value)?"none":"inline-block";
-}
-function ajouterClient(){
-  let base=JSON.parse(localStorage.getItem("clients")||"[]");
-  base.push({nom:nom.value.trim(),tel:tel.value.trim()});
-  localStorage.setItem("clients",JSON.stringify(base));
-  btnAddClient.style.display="none";
-  alert("✅ Client ajouté !");
-}
-
-// Marques auto
-const marquesParType = {
-  "Ordinateur Portable": ["Acer","Asus","Dell","HP","Lenovo","MSI","Gigabyte","Medion","Toshiba","Packard Bell","Samsung","Apple (Mac)"],
-  "Ordinateur Fixe": ["Assemblé","Dell","HP","Lenovo","Acer","Asus","MSI"],
-  "Tablette": ["Apple (iPad)","Samsung Galaxy Tab","Lenovo Tab","Huawei MediaPad","Amazon Fire HD"],
-  "Disque dur externe": ["Seagate","Western Digital (WD)","Toshiba","LaCie","Samsung"],
-  "Écran": ["Samsung","LG","AOC","Iiyama","Asus","BenQ","HP","Dell","MSI"],
-  "Imprimante": ["HP","Canon","Epson","Brother","Kyocera","Lexmark"],
-  "Autre": []
-};
-
-function majMarques(){
-  marque.innerHTML = "";
-  let liste = marquesParType[type.value] || [];
-  if(liste.length === 0){ marque.innerHTML = '<option>Non spécifié</option>'; return; }
-  liste.forEach(m => marque.innerHTML += `<option>${m}</option>`);
-}
-type.addEventListener("change", majMarques);
-majMarques();
-
-function majChamps(){
-  capBloc.style.display = (type.value==="Disque dur externe") ? "block" : "none";
-  tailleBloc.style.display = (type.value==="Écran") ? "block" : "none";
-}
-type.addEventListener("change", majChamps);
-majChamps();
-
-// Tableau appareils
+// ----------------------------------------------------------
+// AJOUT MULTI APPAREILS
+// ----------------------------------------------------------
 let appareils = [];
 
 function ajouterAppareil(){
   appareils.push({
     type:type.value,
     marque:marque.value,
-    modele:modele.value,
-    capacite:(type.value==="Disque dur externe")?capacite.value:"",
-    taille:(type.value==="Écran")?taille.value:""
+    modele:modele.value
   });
   afficherAppareils();
   modele.value="";
+}
+
+function afficherAppareils(){
+  listeAppareils.innerHTML = appareils.map((a,i)=>`
+  <div style="padding:8px 0;border-bottom:1px solid #dce3eb;">
+    <strong>${a.type}</strong> — ${a.marque} ${a.modele}
+    <button class="danger small-btn" onclick="supprimerAppareil(${i})">🗑</button>
+  </div>`).join("");
 }
 
 function supprimerAppareil(i){
@@ -217,52 +179,75 @@ function supprimerAppareil(i){
   afficherAppareils();
 }
 
-function afficherAppareils(){
-  listeAppareils.innerHTML = appareils.map((a,i)=>
-`<div style="padding:8px 0;border-bottom:1px solid #dce3eb;">
-<strong>${a.type}</strong><br>
-Marque : ${a.marque}
-${a.modele?"<br>Modèle : "+a.modele:""}
-${a.capacite?"<br>Capacité : "+a.capacite:""}
-${a.taille?"<br>Taille : "+a.taille:""}
-<br><button class="danger small-btn" onclick="supprimerAppareil(${i})">🗑 Retirer</button>
-</div>`
-  ).join("");
-}
+// ----------------------------------------------------------
+// CRÉATION FICHE → FIRESTORE
+// ----------------------------------------------------------
+async function creer(){
+  if(!nom.value.trim()) return alert("Nom manquant");
+  if(!tel.value.trim()) return alert("Téléphone manquant");
+  if(appareils.length === 0) return alert("Ajoute au moins un appareil");
 
-// Sauvegarde
-document.querySelectorAll("input[name='sauv']").forEach(r=>{
-  r.addEventListener("change",()=>{sauvDetails.style.display=(r.value==="oui")?"block":"none";});
-});
-
-// Enregistrement fiche
-function creer(){
-  if(!nom.value.trim())return alert("Nom manquant");
-  if(!tel.value.trim())return alert("Téléphone manquant");
-  if(appareils.length===0)return alert("Ajoute au moins un appareil");
-
-  let sauv=document.querySelector("input[name='sauv']:checked").value;
-  let sauvItems=[];
-  if(sauv==="oui"){
-    sauvDetails.querySelectorAll("input:checked").forEach(c=>sauvItems.push(c.value));
-  }
-
-  let h=JSON.parse(localStorage.getItem("historique")||"[]");
-  h.push({
-    id:Date.now(),
-    nom:nom.value,
-    tel:tel.value,
-    appareils:appareils,
-    probleme:prob.value,
-    sauvegarde:sauv,
-    sauvegardeElements:sauvItems,
-    date:new Date().toLocaleDateString()
+  await addDoc(collection(db,"fiches"),{
+    nom: nom.value,
+    tel: tel.value,
+    appareils: appareils,
+    probleme: prob.value,
+    date: new Date().toISOString()
   });
-  localStorage.setItem("historique",JSON.stringify(h));
+
   location.href="historique.html";
 }
 
-</script>
+// ----------------------------------------------------------
+// IMPORT JSON CLIENTS → ANTI-QUOTA
+// ----------------------------------------------------------
+async function importerClientsJSON(){
+  let file = jsonImport.files[0];
+  if(!file) return alert("Sélectionne un fichier JSON");
 
+  let txt = await file.text();
+  let clients = JSON.parse(txt);
+  let total = clients.length;
+  let batchSize = 50;
+
+  alert("⏳ Import en cours...");
+
+  for(let i = 0; i < total; i += batchSize){
+    let chunk = clients.slice(i, i + batchSize);
+    let batch = writeBatch(db);
+
+    chunk.forEach(c=>{
+      batch.set(doc(collection(db,"clients")), { nom:c.nom, tel:c.tel });
+    });
+
+    await batch.commit();
+    await new Promise(r => setTimeout(r, 800)); // pause anti quota
+  }
+
+  alert("✅ Import terminé !");
+}
+
+</script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+  import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+  
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  
+  async function chargerClients() {
+    const table = document.getElementById("liste-clients");
+    const snap = await getDocs(collection(db, "clients"));
+    snap.forEach(doc => {
+      const data = doc.data();
+      const li = document.createElement("li");
+      li.textContent = `${data.nom} - ${data.tel}`;
+      table.appendChild(li);
+    });
+  }
+  
+  chargerClients();
+  </script>
+  
 </body>
 </html>
