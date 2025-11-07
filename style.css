@@ -34,6 +34,7 @@ h1{text-align:center;margin-bottom:25px;color:#143658;font-weight:600;}
   border:1px solid #cdd5e0;
   font-size:18px; /* ↑ meilleure lecture */
   background:#f8fafc;
+  margin-top: 10px;
 }
 
 /* --- CARD ÉTIRÉE AVEC SCROLL --- */
@@ -133,6 +134,196 @@ h1{text-align:center;margin-bottom:25px;color:#143658;font-weight:600;}
   box-shadow:0 10px 30px rgba(0,0,0,.25);
   animation:pop .25s ease;
   line-height:1.6;
+}
+.section-title {
+  font-weight: bold;
+  margin-top: 8px;
+  color: #0d3a66;
+  font-size: 15px;
+}
+
+.section-block {
+  background: #fff;
+  padding: 8px 10px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  border: 1px solid #d9e3ef;
+  font-size: 14px;
+  line-height: 1.4;
+}
+/* --- CARTES HISTORIQUE --- */
+.history-container{
+  width:100%;
+  max-width:900px;
+  margin:20px auto 60px;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+.fiche-card{
+  background:#ffffff;
+  padding:18px 22px;
+  border-radius:14px;
+  border:1px solid #ced6e3;
+  box-shadow:0 4px 14px rgba(0,0,0,.08);
+  transition:.2s;
+}
+.fiche-card:hover{
+  transform: translateY(-3px);
+  box-shadow:0 6px 22px rgba(0,0,0,.12);
+}
+
+.fiche-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.fiche-name{
+  font-size:20px;
+  font-weight:700;
+  color:#0d2b4a;
+}
+
+.fiche-date{
+  font-size:14px;
+  color:#6c7a89;
+}
+
+.fiche-list{
+  margin-top:12px;
+  color:#1d2d3c;
+  font-size:16px;
+  line-height:1.45;
+}
+
+.fiche-list p{
+  margin:4px 0;
+}
+
+.fiche-list strong{
+  color:#000;
+}
+.history-container{
+  width:100%;
+  max-width:700px; /* pour que ça soit bien centré */
+  margin:25px auto;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  align-items:center;
+}
+
+.fiche-card{
+  width:100%; /* la carte prend toute la largeur dispo */
+  transition:transform .15s ease, box-shadow .2s ease;
+}
+.fiche-card p {
+  padding: 10px;
+}
+
+.fiche-card:hover{
+  transform:translateY(-3px);
+  box-shadow:0 6px 14px rgba(0,0,0,0.10);
+}
+/* PAGE HISTORIQUE */
+.history-page{
+  width:100%;
+  max-width:900px;
+  margin:0 auto;
+  padding:25px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+
+.history-page h1{
+  margin-bottom:30px;
+  text-align:center;
+  color:#143658;
+  font-size:28px;
+}
+
+.history-container{
+  width:100%;
+  max-width:650px; /* largeur idéale */
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+  margin-bottom:30px;
+}
+
+.fiche-card{
+  width:100%;
+  background:#fff;
+  padding:18px;
+  border-radius:14px;
+  border:1px solid #d9dfe8;
+  box-shadow:0 4px 10px rgba(0,0,0,.08);
+  transition:.2s;
+}
+
+.fiche-card:hover{
+  transform:translateY(-3px);
+  box-shadow:0 8px 18px rgba(0,0,0,.12);
+}
+
+.return-link{
+  font-size:18px;
+}
+.delete-btn{
+  float:right;
+  border:none;
+  background:none;
+  font-size:20px;
+  cursor:pointer;
+  opacity:0.6;
+  transition:0.2s;
+}
+.delete-btn:hover{
+  opacity:1;
+}
+.accordion {
+  background:#f4f7fb;
+  border:1px solid #d5dcea;
+  border-radius:10px;
+  margin-top:14px;
+  overflow:hidden;
+}
+
+.accordion-header {
+  padding:14px;
+  font-weight:600;
+  cursor:pointer;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  color:#0d3157;
+}
+
+.accordion-header:hover { background:#e8eef7; }
+
+.accordion-content {
+  max-height:0;
+  overflow:hidden;
+  transition:max-height .35s ease;
+  padding:0 14px;
+}
+
+.accordion.open .accordion-content {
+  max-height:400px; /* hauteur max déployée */
+  padding:14px;
+}
+
+.accordion .arrow {
+  transition: transform .35s;
+}
+
+.accordion.open .arrow {
+  transform: rotate(-180deg);
 }
 
 .modal-buttons{display:flex;justify-content:space-between;margin-top:18px;}
