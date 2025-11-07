@@ -12,7 +12,7 @@
 
 <h1>📚 Historique des dépôts</h1>
 
-<div class="card" id="list"></div>
+<div class="card" id="list">Chargement...</div>
 
 <div class="center">
   <a href="index.html" class="link">⬅ Retour</a>
@@ -20,106 +20,64 @@
 
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, deleteDoc, doc } 
+from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-// Charger l'historique
-let h = JSON.parse(localStorage.getItem("historique")||"[]");
+const firebaseConfig = {
+  apiKey: "AIzaSyAR8PVlerANOGdzNBwZjj81I6Ajtbn63eI",
+  authDomain: "sosordi03-sav.firebaseapp.com",
+  projectId: "sosordi03-sav",
+  storageBucket: "sosordi03-sav.firebasestorage.app",
+  messagingSenderId: "267775482168",
+  appId: "1:267775482168:web:82a42975d8e24dd71a09cd"
+};
 
-// ✅ Conversion anciennes fiches → nouveau format
-let modif = false;
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-h = h.map(f => {
-
-  // Si déjà multi-appareils → on garde
-  if (Array.isArray(f.appareils)) return f;
-
-  // Sinon → convertir ancien format en nouveau
-  modif = true;
-  return {
-    id: f.id,
-    nom: f.nom,
-    tel: f.tel,
-    appareils: [{
-      type: f.type || "Non précisé",
-      marque: f.marque || "Non précisé",
-      modele: f.modele || "",
-      capacite: f.capacite || "",
-      taille: f.taille || ""
-    }],
-    probleme: f.probleme || "",
-    sauvegarde: f.sauvegarde || "non",
-    sauvegardeElements: f.sauvegardeElements || [],
-    date: f.date || new Date().toLocaleDateString()
-  };
-});
-
-// ✅ Sauvegarde après conversion (1 seule fois)
-if(modif){
-  localStorage.setItem("historique", JSON.stringify(h));
-}
-
-// S'il n'y a rien → message
-if(h.length === 0){
-  list.innerHTML = "<p>Aucune fiche pour le moment.</p>";
-}
-
-// Afficher les fiches en accordéon
-list.innerHTML = h.map((f,i)=>`
-
-<div class="options-block" style="padding:14px;border-radius:10px;">
-
-  <div onclick="toggle(${i})" style="display:flex;justify-content:space-between;cursor:pointer;">
-    <div>
-      <strong>${f.nom}</strong> — ${f.tel}<br>
-      <span style="font-size:14px;color:#555;">${f.date}</span>
-    </div>
-    <div style="font-size:22px;">⮟</div>
-  </div>
-
-  <div id="content-${i}" style="display:none;margin-top:10px;font-size:16px;line-height:1.5;">
-
-    <label>Appareils déposés :</label><br><br>
-
-    ${f.appareils.map(a=>`
-<strong>${a.type}</strong><br>
-Marque : ${a.marque}
-${a.modele ? "<br>Modèle : "+a.modele : ""}
-${a.capacite ? "<br>Capacité : "+a.capacite : ""}
-${a.taille ? "<br>Taille : "+a.taille : ""}
-<br><br>
-`).join("")}
-
-    <label>Problème signalé :</label><br>
-    ${f.probleme || "(Non précisé)"}<br><br>
-
-    <label>Sauvegarde :</label> ${f.sauvegarde === "oui" ? "Oui" : "Non"}<br>
-    ${f.sauvegardeElements && f.sauvegardeElements.length>0 ? "Éléments : "+f.sauvegardeElements.join(", ") : ""}
-
-    <br><br>
-
-    <button class="danger small-btn" onclick="supprimer(${f.id})">🗑 Supprimer la fiche</button>
-
-  </div>
-
-</div>
-
-`).join("");
-
-// Accordéon
 function toggle(i){
   let c=document.getElementById("content-"+i);
-  c.style.display = (c.style.display==="none") ? "block" : "none";
+  c.style.display=c.style.display==="none"?"block":"none";
 }
+window.toggle=toggle;
 
-// Supprimer une fiche
-function supprimer(id){
-  if(!confirm("Supprimer cette fiche ?")) return;
-  let h=JSON.parse(localStorage.getItem("historique")||"[]");
-  h=h.filter(e=>e.id!==id);
-  localStorage.setItem("historique",JSON.stringify(h));
+async function supprimer(id){
+  if(!confirm("Supprimer ?")) return;
+  await deleteDoc(doc(db,"fiches",id));
   location.reload();
 }
+window.supprimer=supprimer;
 
+async function load(){
+  const snap = await getDocs(collection(db,"fiches"));
+  return snap.docs.map(d=>({id:d.id,...d.data()}));
+}
+
+load().then(h=>{
+  if(h.length===0){
+    list.innerHTML="<p style='text-align:center;color:#666;'>Aucune fiche enregistrée.</p>";
+    return;
+  }
+
+  list.innerHTML=h.map((f,i)=>`
+<div class="options-block" style="padding:14px;border-radius:10px;">
+  <div onclick="toggle(${i})" style="display:flex;justify-content:space-between;cursor:pointer;">
+    <div><strong>${f.nom}</strong> — ${f.tel}<br><span style="font-size:13px;">${new Date(f.date).toLocaleDateString()}</span></div>
+    <div style="font-size:20px;">⮟</div>
+  </div>
+
+  <div id="content-${i}" style="display:none;margin-top:10px;">
+    ${(f.appareils||[]).map(a=>`
+     <strong>${a.type}</strong> — ${a.marque} ${a.modele||""}<br>
+    `).join("")}
+    <br><strong>Problème :</strong><br>${f.probleme||"(Non précisé)"}<br><br>
+    <button class="danger small-btn" onclick="supprimer('${f.id}')">🗑 Supprimer</button>
+  </div>
+</div>
+`).join("");
+});
 </script>
 
 </body>
