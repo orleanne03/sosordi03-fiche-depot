@@ -34,13 +34,18 @@ window.doc = doc;
 
 function toggleAccordion(el){
     el.parentNode.classList.toggle("open");
-}
-window.toggleAccordion = toggleAccordion;
+  }
+  window.toggleAccordion = toggleAccordion;
 </script>
 
 <style>
+/* Style rapidos pour bloc carte mobile */
 .card-block { background:#f6f9fc;padding:12px;border-radius:8px;margin-top:12px;border:1px solid #d8e0e8; }
-#addClientBtn { display:none;margin-top:8px;background:#0078d7;padding:8px;color:white;border-radius:6px;font-size:16px;text-align:center;cursor:pointer; }
+.accordion { margin-top:12px; border:1px solid #dce6f0; border-radius:8px; overflow:hidden; }
+.accordion-header { padding:10px 12px; background:#f4f7fb; cursor:pointer; font-weight:600; display:flex; justify-content:space-between; align-items:center; }
+.accordion-content { display:none; padding:10px 12px; }
+.accordion.open .accordion-content { display:block; }
+.accordion .arrow { opacity:.7; font-size:12px; margin-left:8px; }
 </style>
 
 </head>
@@ -53,8 +58,6 @@ window.toggleAccordion = toggleAccordion;
 <input type="text" id="search" class="input" placeholder="🔍 Rechercher un client..." oninput="rechercherClient()">
 <div id="suggest" class="suggest-box"></div>
 
-<div id="addClientBtn" onclick="ajouterNouveauClient()">➕ Ajouter ce client à la base</div>
-
 <div class="card">
 
 <label>Nom du client :</label>
@@ -63,6 +66,20 @@ window.toggleAccordion = toggleAccordion;
 <label>Téléphone :</label>
 <input id="tel" class="input" maxlength="14" oninput="formatTel();">
 
+<!-- === NOUVEAU : Mot de passe client + option majuscule initiale === -->
+<div class="card-block" style="margin-top:12px;">
+  <label>Mot de passe du client (facultatif) :</label>
+  <input id="mdp" class="input" placeholder="Saisir le mot de passe">
+
+  <div style="margin-top:8px;">
+    <label style="font-weight:600;display:block;margin-bottom:6px;">Format du mot de passe :</label>
+    <label><input type="radio" name="mdpCap" value="no" checked> Respecter la saisie (ne pas modifier)</label><br>
+    <label><input type="radio" name="mdpCap" value="firstUpper"> Mettre la première lettre en majuscule</label>
+  </div>
+</div>
+<!-- === FIN === -->
+
+<!-- ✅ Bloc Appareils en PREMIER (mobile ok) -->
 <div class="card-block">
 <label>Ajouter un appareil :</label>
 
@@ -91,10 +108,12 @@ window.toggleAccordion = toggleAccordion;
   </div>
 </div>
 
+
 <button class="secondary small-btn" onclick="ajouterAppareil()">➕ Ajouter cet appareil</button>
 <div id="listeAppareils"></div>
 </div>
 
+<!-- ✅ Sauvegarde -->
 <div class="card-block">
 <label>Sauvegarde :</label><br>
 <input type="radio" name="sauv" value="Non" checked> Non
@@ -110,6 +129,7 @@ window.toggleAccordion = toggleAccordion;
 
 </div>
 
+<!-- ✅ Travaux -->
 <div class="accordion">
   <div class="accordion-header" onclick="toggleAccordion(this)">
     Travaux à réaliser :
@@ -144,41 +164,24 @@ window.toggleAccordion = toggleAccordion;
 </div>
 
 <script>
-// ---------------- Téléphone
+// ----------------------------------------------------------
+// FORMAT TÉLÉPHONE
 function formatTel(){ let v = tel.value.replace(/\D/g,"").slice(0,10); tel.value = v.replace(/(..)(?=.)/g,"$1-"); }
 
-// ---------------- Recherche + Suggest
+// ----------------------------------------------------------
+// RECHERCHE CLIENT
 async function rechercherClient(){
   let val = search.value.trim().toUpperCase();
-  suggest.innerHTML = ""; 
-  if(val.length < 2){ suggest.style.display="none"; document.getElementById("addClientBtn").style.display="none"; return; }
-
+  suggest.innerHTML = ""; if(val.length < 2) return;
   let q = query(collection(db, "clients"), orderBy("nom"), startAt(val), endAt(val + "\uf8ff"));
   let snap = await getDocs(q);
-
-  suggest.innerHTML = "";
   snap.forEach(doc=>{ let c = doc.data(); suggest.innerHTML += `<div class="sug" onclick='remplirClient("${c.nom}","${c.tel}")'>${c.nom} — ${c.tel}</div>`; });
-
-  suggest.style.display = snap.size ? "block" : "none";
-  document.getElementById("addClientBtn").style.display = snap.size ? "none" : "block";
+  suggest.style.display = "block";
 }
+function remplirClient(n,t){ nom.value = n; tel.value = t; suggest.style.display = "none"; }
 
-function remplirClient(n,t){
-  nom.value = n.toUpperCase();
-  tel.value = t;
-  suggest.style.display = "none";
-  document.getElementById("addClientBtn").style.display="none";
-}
-
-// ---------------- Ajouter client si inconnu
-async function ajouterNouveauClient(){
-  if(!nom.value.trim() || !tel.value.trim()) return alert("Saisir NOM + TÉLÉPHONE d’abord");
-  await addDoc(collection(db,"clients"),{ nom:nom.value.toUpperCase(), tel:tel.value });
-  alert("✅ Client ajouté à la base !");
-  document.getElementById("addClientBtn").style.display="none";
-}
-
-// ---------------- Appareils
+// ----------------------------------------------------------
+// APPAREILS
 let appareils = [];
 function ajouterAppareil(){
   appareils.push({ type:type.value, marque:marque.value, modele:modele.value });
@@ -193,20 +196,37 @@ function afficherAppareils(){
 }
 function supprimerAppareil(i){ appareils.splice(i,1); afficherAppareils(); }
 
-// ---------------- Sauvegarde
+// ----------------------------------------------------------
+// AFFICHAGE OPTIONS SAUVEGARDE
 document.querySelectorAll('input[name="sauv"]').forEach(r=>{
   r.onchange = ()=>{ optionsSauvegarde.style.display = (r.value==="Oui")?"block":"none"; };
 });
 
-// ---------------- Créer Fiche
+// ----------------------------------------------------------
+// CRÉATION FICHE (avec auto-ajout client)
 async function creer(){
   if(!nom.value.trim()) return alert("Nom manquant");
   if(!tel.value.trim()) return alert("Téléphone manquant");
   if(appareils.length === 0) return alert("Ajoute au moins un appareil");
 
+// ✅ Sauvegarde Oui/Non
 let sauvegardeChoix = document.querySelector('input[name="sauv"]:checked')?.value || "Non";
-let sauvItems = [...document.querySelectorAll('input[name="sauv-item"]:checked')].map(c => c.value);
-let travauxSelectionnes = [...document.querySelectorAll('.trav:checked')].map(c => c.value);
+
+// ✅ Détails sauvegarde
+let sauvItems = [...document.querySelectorAll('input[name="sauv-item"]:checked')]
+    .map(c => c.value);
+
+// ✅ Travaux cochés
+let travauxSelectionnes = [...document.querySelectorAll('.trav:checked')]
+    .map(c => c.value);
+
+// ✅ Mot de passe et option de capitalisation
+let mdpRaw = (document.getElementById("mdp").value || "").trim();
+let mdpOption = document.querySelector('input[name="mdpCap"]:checked')?.value || "no";
+let mdpFinal = mdpRaw;
+if(mdpRaw && mdpOption === "firstUpper"){
+  mdpFinal = mdpRaw.charAt(0).toUpperCase() + mdpRaw.slice(1);
+}
 
   await addDoc(collection(db,"fiches"),{
     nom: nom.value,
@@ -216,42 +236,66 @@ let travauxSelectionnes = [...document.querySelectorAll('.trav:checked')].map(c 
     sauvegarde: sauvegardeChoix,
     sauvegardeItems: sauvItems,
     travaux: travauxSelectionnes,
+    password: mdpFinal,          // <-- mot de passe stocké
     date: new Date().toISOString()
   });
 
   location.href="historique.html";
 }
-
-// ---------------- Marques par type
-const marquesParType = {
-  "Ordinateur Portable": ["Acer","Asus","HP","Lenovo","Dell","MSI","Apple","Samsung","Toshiba","Autre"],
-  "Ordinateur Fixe": ["Assembler","Acer","Asus","HP","Dell","Lenovo","Autre"],
-  "Tablette": ["Apple","Samsung","Lenovo","Huawei","Microsoft Surface","Autre"],
-  "Disque dur externe": ["Seagate","Western Digital","Toshiba","Samsung","LaCie","Autre"],
-  "Écran": ["Samsung","LG","AOC","Iiyama","Philips","Dell","Asus","Autre"],
-  "Imprimante": ["HP","Canon","Epson","Brother","Lexmark","Samsung","Autre"],
-  "Autre": ["Autre"]
-};
-
-function majMarques(){
-  let type = document.getElementById("type").value;
-  let select = document.getElementById("marque");
-  select.innerHTML = "";
-  marquesParType[type].forEach(m=>{ let opt=document.createElement("option"); opt.textContent=m; select.appendChild(opt); });
-}
-majMarques();
-
-document.getElementById("marque").addEventListener("change", function(){
-  if(this.value === "Autre"){
-    this.outerHTML = '<input id="marque" class="input" placeholder="Saisir la marque">';
+// 🔥 Fermer la liste si on clique ailleurs
+document.addEventListener("click", function(e){
+  if(!e.target.closest("#search") && !e.target.closest("#suggest")){
+    suggest.style.display = "none";
   }
 });
 
-// ---------------- Fermer suggestion
-document.addEventListener("click", e=>{ if(!e.target.closest("#search") && !e.target.closest("#suggest")) suggest.style.display="none"; });
-search.addEventListener("input", ()=>{ if(search.value.trim().length < 2) suggest.style.display="none"; });
-document.addEventListener("keydown", e=>{ if(e.key === "Escape") suggest.style.display="none"; });
+// 🔥 Fermer si champ vide
+search.addEventListener("input", function(){
+  if(search.value.trim().length < 2){
+    suggest.style.display = "none";
+  }
+});
+
+// 🔥 Fermer avec Échap
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape"){
+    suggest.style.display = "none";
+  }
+});
+
 </script>
+<script>
+  const marquesParType = {
+    "Ordinateur Portable": ["Acer","Asus","HP","Lenovo","Dell","MSI","Apple","Samsung","Toshiba","Autre"],
+    "Ordinateur Fixe": ["Assembler","Acer","Asus","HP","Dell","Lenovo","Autre"],
+    "Tablette": ["Apple","Samsung","Lenovo","Huawei","Microsoft Surface","Autre"],
+    "Disque dur externe": ["Seagate","Western Digital","Toshiba","Samsung","LaCie","Autre"],
+    "Écran": ["Samsung","LG","AOC","Iiyama","Philips","Dell","Asus","Autre"],
+    "Imprimante": ["HP","Canon","Epson","Brother","Lexmark","Samsung","Autre"],
+    "Autre": ["Autre"]
+  };
+
+  function majMarques(){
+    let type = document.getElementById("type").value;
+    let select = document.getElementById("marque");
+    select.innerHTML = "";
+
+    marquesParType[type].forEach(m=>{
+      let opt = document.createElement("option");
+      opt.textContent = m;
+      select.appendChild(opt);
+    });
+  }
+
+  majMarques(); // initialise au chargement
+
+  // Si "Autre" est choisi → champ texte libre
+  document.getElementById("marque").addEventListener("change", function(){
+    if(this.value === "Autre"){
+      this.outerHTML = '<input id="marque" class="input" placeholder="Saisir la marque">';
+    }
+  });
+  </script>
 
 </body>
 </html>
