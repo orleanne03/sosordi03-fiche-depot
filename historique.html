@@ -2,83 +2,124 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Historique - sosordi03</title>
+<title>Historique des dépôts</title>
 <link rel="stylesheet" href="style.css">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-</head>
-<body>
-
-<div class="container">
-
-<h1>📚 Historique des dépôts</h1>
-
-<div class="card" id="list">Chargement...</div>
-
-<div class="center">
-  <a href="index.html" class="link">⬅ Retour</a>
-</div>
-
-</div>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, deleteDoc, doc } 
-from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { 
+  getFirestore, collection, getDocs, orderBy, query,
+  deleteDoc, doc
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAR8PVlerANOGdzNBwZjj81I6Ajtbn63eI",
   authDomain: "sosordi03-sav.firebaseapp.com",
-  projectId: "sosordi03-sav",
-  storageBucket: "sosordi03-sav.firebasestorage.app",
-  messagingSenderId: "267775482168",
-  appId: "1:267775482168:web:82a42975d8e24dd71a09cd"
+  projectId: "sosordi03-sav"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-function toggle(i){
-  let c=document.getElementById("content-"+i);
-  c.style.display=c.style.display==="none"?"block":"none";
+// ✅ SUPPRESSION D'UNE FICHE
+async function supprimerFiche(id) {
+  if(!confirm("Voulez-vous supprimer cette fiche ?")) return;
+  await deleteDoc(doc(db, "fiches", id));
+  location.reload(); // recharge la page
 }
-window.toggle=toggle;
+window.supprimerFiche = supprimerFiche;
 
-async function supprimer(id){
-  if(!confirm("Supprimer ?")) return;
-  await deleteDoc(doc(db,"fiches",id));
-  location.reload();
-}
-window.supprimer=supprimer;
-
+// ✅ CHARGEMENT DES FICHES
 async function load(){
-  const snap = await getDocs(collection(db,"fiches"));
-  return snap.docs.map(d=>({id:d.id,...d.data()}));
+  let snap = await getDocs(query(collection(db,"fiches"), orderBy("date","desc")));
+  let zone = document.getElementById("liste");
+
+  snap.forEach(d=>{
+    let f = d.data();
+    let appareils = f.appareils.map(a=>`• ${a.type} — ${a.marque} ${a.modele}`).join("<br>");
+    let travaux = (f.travaux?.length) 
+  ? f.travaux.map(t => `<li>${t}</li>`).join("") 
+  : "<li>Aucun</li>";
+
+    let sauvegarde = (f.sauvegarde === "Oui") ? `Oui (${f.sauvegardeItems.join(", ")})` : "Non";
+
+    zone.innerHTML += `
+      <div class="fiche-card">
+        <button class="delete-btn" onclick="supprimerFiche('${d.id}')">🗑</button>
+
+        <h3>${f.nom} — ${f.tel}</h3>
+        <small>📅 ${new Date(f.date).toLocaleDateString()}</small>
+
+        <p>${appareils.replace(/•/g, "💻")}</p>
+        <p>💾 Sauvegarde : <strong>${sauvegarde}</strong></p>
+        <p>🔧 Travaux :</p>
+<ul style="margin:4px 0 8px 0; padding-left:20px;">
+  ${travaux}
+</ul>
+
+        <p>📝 <strong>Problème :</strong> ${f.probleme}</p>
+      </div>
+    `;
+  });
 }
-
-load().then(h=>{
-  if(h.length===0){
-    list.innerHTML="<p style='text-align:center;color:#666;'>Aucune fiche enregistrée.</p>";
-    return;
-  }
-
-  list.innerHTML=h.map((f,i)=>`
-<div class="options-block" style="padding:14px;border-radius:10px;">
-  <div onclick="toggle(${i})" style="display:flex;justify-content:space-between;cursor:pointer;">
-    <div><strong>${f.nom}</strong> — ${f.tel}<br><span style="font-size:13px;">${new Date(f.date).toLocaleDateString()}</span></div>
-    <div style="font-size:20px;">⮟</div>
-  </div>
-
-  <div id="content-${i}" style="display:none;margin-top:10px;">
-    ${(f.appareils||[]).map(a=>`
-     <strong>${a.type}</strong> — ${a.marque} ${a.modele||""}<br>
-    `).join("")}
-    <br><strong>Problème :</strong><br>${f.probleme||"(Non précisé)"}<br><br>
-    <button class="danger small-btn" onclick="supprimer('${f.id}')">🗑 Supprimer</button>
-  </div>
-</div>
-`).join("");
-});
+load();
 </script>
 
-</body>
+<style>
+/* ✅ Une seule colonne propre */
+
+#liste {
+  max-width: 700px;
+  
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* Carte plus clean */
+.fiche-card{
+  position: relative;
+  background:#fff;
+  padding:16px 18px;
+  border-radius:12px;
+  border:1px solid #d9dfe8;
+  box-shadow:0 4px 12px rgba(0,0,0,0.06);
+}
+
+/* Bouton supprimer discret */
+.delete-btn{
+  position:absolute;
+  top:10px;
+  right:10px;
+  background:none;
+  border:none;
+  font-size:20px;
+  cursor:pointer;
+  opacity:.6;
+}
+.delete-btn:hover{opacity:1;}
+
+
+
+
+</style>
+</head>
+
+<body>
+
+  <div class="container">
+  
+    <h1>📚 Historique des dépôts</h1>
+  
+    <div id="liste"></div>
+  
+    <div class="center" style="margin-top:30px;">
+      <a href="index.html" class="link">⬅ Retour</a>
+    </div>
+  
+  </div>
+  
+  </body>
+  
 </html>
