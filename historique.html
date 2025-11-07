@@ -8,7 +8,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, orderBy, query } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, orderBy, query, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAR8PVlerANOGdzNBwZjj81I6Ajtbn63eI",
@@ -19,6 +19,13 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+async function supprimerFiche(id){
+  if(confirm("Supprimer cette fiche ?")){
+    await deleteDoc(doc(db,"fiches",id));
+    location.reload();
+  }
+}
+
 async function load(){
   let snap = await getDocs(query(collection(db,"fiches"), orderBy("date","desc")));
   let zone = document.getElementById("liste");
@@ -26,27 +33,29 @@ async function load(){
   snap.forEach(d=>{
     let f = d.data();
     let appareils = f.appareils.map(a=>`• ${a.type} — ${a.marque} ${a.modele}`).join("<br>");
-
-    let travauxHtml = (f.travaux?.length)
-      ? "<ul>" + f.travaux.map(t=>`<li>${t}</li>`).join("") + "</ul>"
-      : "Aucun";
-
-    let sauvegarde = (f.sauvegarde==="Oui") ? `Oui (${(f.sauvegardeItems||[]).join(", ")})` : "Non";
-    let pwdHtml = f.password ? `<p>🔐 <strong>Mot de passe :</strong><br>${f.password}</p>` : "";
+    let travaux = (f.travaux?.length) ? f.travaux.map(t=>`<li>${t}</li>`).join("") : "<li>Aucun</li>";
+    let sauvegarde = (f.sauvegarde==="Oui") ? `Oui (${f.sauvegardeItems.join(", ")})` : "Non";
+    let motdepasse = f.motdepasse ? f.motdepasse : "Non renseigné";
 
     zone.innerHTML += `
 <div class="fiche-card">
+  <button class="delete-btn" onclick="supprimerFiche('${d.id}')">🗑</button>
   <h3>${f.nom} — ${f.tel}</h3>
   <small>📅 ${new Date(f.date).toLocaleDateString()}</small>
 
   <p>💻 ${appareils}</p>
   <p>💾 <strong>Sauvegarde :</strong> ${sauvegarde}</p>
-  <p>🛠️ <strong>Travaux :</strong> ${travauxHtml}</p>
-  ${pwdHtml}
-  <p>📝 <strong>Problème :</strong><br>${f.probleme || ""}</p>
+
+  <p>🛠️ <strong>Travaux :</strong></p>
+  <ul>${travaux}</ul>
+
+  <p>🔑 <strong>Mot de passe :</strong> ${motdepasse}</p>
+
+  <p>📝 <strong>Problème :</strong> ${f.probleme}</p>
 </div>`;
   });
 }
+
 load();
 </script>
 
