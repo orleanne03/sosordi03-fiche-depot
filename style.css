@@ -655,3 +655,29 @@ label[for="nom"]::before {
 .accordion-header {
   font-size: 17px !important;
 }
+/* --- Compactage des blocs Travaux, sans changer la police --- */
+
+.checkbox-group label {
+  padding: 6px 10px !important;   /* hauteur réduite */
+  margin-bottom: 4px !important;  /* espace vertical réduit */
+  border-radius: 10px !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f9fbff;
+  border: 1px solid #d8e3f0;
+}
+
+/* Écarter moins les éléments dans la colonne */
+.checkbox-group {
+  gap: 8px 0 !important;  /* verticalement plus compact */
+}
+
+/* Réduire légèrement la hauteur des grandes cartes */
+.accordion-content {
+  padding: 6px 10px !important; /* moins d’air autour */
+}
+
+.accordion-header {
+  padding: 8px 14px !important;
+}
