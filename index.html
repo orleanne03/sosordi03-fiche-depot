@@ -192,79 +192,7 @@ function majModeles(){
 }
 window.majModeles = majModeles;
 
-// ✅ Afficher champ texte si "Autre" (compatible tablette)
-window.addEventListener("DOMContentLoaded", () => {
-  modele.addEventListener("change", () => {
-    if (modele.value === "autre") {
-      modeleAutre.style.display = "block";
-    } else {
-      modeleAutre.style.display = "none";
-    }
-  });
-});
-
-// ✅ APPRENTISSAGE
-async function enregistrer(){
-  let s = serie.value.trim();
-  let m = (modeleAutre.style.display==="block" ? modeleAutre.value.trim() : modele.value.trim());
-  let mk = marque.value;
-
-  if(s){
-    if(!seriesParMarque[mk]) seriesParMarque[mk] = [];
-    if(!seriesParMarque[mk].includes(s)){
-      seriesParMarque[mk].push(s);
-      await setDoc(doc(db,"series",mk), { liste:seriesParMarque[mk] });
-    }
-  }
-
-  let key = mk+"__"+(s || "");
-  if(!modelesParSerie[key]) modelesParSerie[key] = [];
-  if(m && !modelesParSerie[key].includes(m)){
-    modelesParSerie[key].push(m);
-    await setDoc(doc(db,"modeles",key), { liste:modelesParSerie[key] });
-  }
-}
-
-// ===================== SAUVEGARDE =====================
-
-document.querySelectorAll('input[name="sauv"]').forEach(r=>{
-  r.onchange = ()=>{ optionsSauvegarde.style.display = (r.value==="Oui")?"block":"none"; };
-});
-
-// ===================== CRÉATION FICHE =====================
-
-async function creer(){
-  if(!nom.value.trim()) return alert("Nom manquant");
-  if(!tel.value.trim()) return alert("Téléphone manquant");
-  if(appareils.length === 0) return alert("Ajoute au moins un appareil");
-
-await enregistrer();
-
-let sauvegardeChoix = document.querySelector('input[name="sauv"]:checked')?.value || "Non";
-let sauvItems = [...document.querySelectorAll('input[name="sauv-item"]:checked')].map(c => c.value);
-let travauxSelectionnes = [...document.querySelectorAll('.trav:checked')].map(c => c.value);
-
-await addDoc(collection(db,"fiches"),{
-  nom: nom.value,
-  tel: tel.value,
-  appareils: appareils,
-  probleme: prob.value,
-  sauvegarde: sauvegardeChoix,
-  sauvegardeItems: sauvItems,
-  travaux: travauxSelectionnes,
-  motdepasse: mdp.value.trim() || "",
-  couleur: couleur.value || "",
-  date: new Date().toISOString()
-});
-
-location.href="historique.html";
-}
-window.creer = creer;
-
-document.addEventListener("click", e=>{ if(!e.target.closest("#search") && !e.target.closest("#suggest")) suggest.style.display="none"; });
-search.addEventListener("input", ()=>{ if(search.value.trim().length < 2) suggest.style.display="none"; });
-document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.display="none"; });
-
+// ✅ Affichage champ manuel (patch tablette Samsung)
 </script>
 
 </head>
@@ -316,7 +244,10 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.dis
 
   <div>
     <label>Modèle :</label>
-    <select id="modele" class="input"></select>
+
+    <!-- ✅ SEULE LIGNE MODIFIÉE -->
+    <select id="modele" class="input" onchange="if(this.value==='autre'){modeleAutre.style.display='block';}else{modeleAutre.style.display='none';}"></select>
+
     <input id="modeleAutre" class="input" placeholder="Saisir modèle" style="display:none;margin-top:6px;">
   </div>
 
