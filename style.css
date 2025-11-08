@@ -239,4 +239,68 @@ body.history-page{
 .fiche-date{opacity:.9;margin-bottom:6px;}
 .history-container p{margin:6px 0;line-height:1.4;}
 /* ========================================================== */
+/* === DESIGN D2 — Style doux bleu/gris pour les fiches === */
+
+.fiche-card{
+  background:#f6f9ff;               /* bleu pastel très léger */
+  border:1px solid #d7e3f5;
+  border-radius:16px;
+  padding:22px 20px 24px;
+  box-shadow:0 5px 18px rgba(0,0,0,.07);
+  line-height:1.55;
+  position:relative;
+}
+
+/* Nom */
+.fiche-name{
+  font-size:22px;
+  font-weight:700;
+  color:#143658;
+  margin-bottom:4px;
+}
+
+/* Date & téléphone */
+.fiche-date,
+.fiche-card p{
+  color:#2b3f55;
+  font-size:16px;
+}
+
+/* Icônes un peu plus douces */
+.fiche-card p::before {
+  opacity:0.85;
+}
+
+/* Travaux mis en valeur */
+.fiche-card strong{
+  color:#0b2f55;
+  font-weight:600;
+}
+
+/* Bouton supprimer - pastille douce */
+.delete-btn{
+  position:absolute;
+  top:14px;
+  right:14px;
+  background:#ff6b6b;
+  border:none;
+  color:white;
+  padding:7px 9px;
+  border-radius:10px;
+  cursor:pointer;
+  transition:.2s;
+  font-size:16px;
+}
+.delete-btn:hover{
+  background:#e05252;
+}
+
+/* Ajustements du lien Retour */
+.return-link{
+  display:block;
+  text-align:center;
+  margin-top:25px;
+  font-size:18px;
+  color:#2866c7;
+}
 @keyframes pop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
