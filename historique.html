@@ -46,8 +46,10 @@ async function load(){
 <div class="fiche-card accordion-card">
 
   <div class="fiche-header">
-    <span class="color-tag" style="background:${f.couleur || 'transparent'}"></span>
-    <span class="fiche-name">${f.nom}</span>
+    <div class="fiche-header-left">
+      <span class="color-tag" style="background:${f.couleur || 'transparent'}"></span>
+      <span class="fiche-name">${f.nom}</span>
+    </div>
     <button class="delete-btn" onclick="supprimer('${d.id}')">🗑</button>
   </div>
 
@@ -58,24 +60,23 @@ async function load(){
     <p>💻<br>${appareils.replace(/•/g,"🔹")}</p>
     <p>💾 Sauvegarde : <strong>${sauv}</strong></p>
     <p>🔐 Mot de passe : <strong>${mdp}</strong></p>
+
+    <!-- ✅ TRAVAUX EN PREMIER -->
+    <p>🔧 Travaux :<br> <strong>${travaux}</strong></p>
+
+    <!-- ✅ PROBLÈME EN DESSOUS -->
     <p>📝 ${f.probleme}</p>
-    <p>🔧 Travaux :<br><strong>${travaux}</strong></p>
   </div>
 
 </div>`;
   });
 }
+
 window.supprimer = supprimer;
 load();
 </script>
 
-</head>
-
-<body class="history-page">
-<h1>📚 Historique des dépôts</h1>
-<div id="liste" class="history-container"></div>
-<div class="center"><a href="index.html" class="link return-link">⬅ Retour</a></div>
-
+<!-- ✅ Script accordéon -->
 <script>
 document.addEventListener("click", function(e){
   let header = e.target.closest(".fiche-header");
@@ -84,5 +85,11 @@ document.addEventListener("click", function(e){
 });
 </script>
 
+</head>
+
+<body class="history-page">
+<h1>📚 Historique des dépôts</h1>
+<div id="liste" class="history-container"></div>
+<div class="center"><a href="index.html" class="link return-link">⬅ Retour</a></div>
 </body>
 </html>
