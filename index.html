@@ -31,7 +31,7 @@ async function ajouterNouveauClient(){
 
   await setDoc(doc(collection(db,"clients")),{
     nom: search.value.trim().toUpperCase(),
-    tel: tel.value.trim() // on garde ton format actuel
+    tel: tel.value.trim()
   });
 
   nom.value = search.value.toUpperCase();
@@ -41,29 +41,30 @@ async function ajouterNouveauClient(){
 window.ajouterNouveauClient = ajouterNouveauClient;
 
 // ----------------------------------------------------------
-// FORMAT TÉLÉPHONE (affichage uniquement)
+// FORMAT TÉLÉPHONE (affichage)
 function formatTel(){
   let v = tel.value.replace(/\D/g,"").slice(0,10);
   tel.value = v.replace(/(..)(?=.)/g,"$1-");
 }
 
 // ----------------------------------------------------------
-// RECHERCHE CLIENT (Nom OU Téléphone normalisé)
+// RECHERCHE CLIENT (NOM OU TÉLÉPHONE)
 async function rechercherClient(){
-  let val = search.value.trim().toUpperCase();
+  let input = search.value.trim();
+  let val = input.toUpperCase();
   suggest.innerHTML = "";
   if(val.length < 2){ suggest.style.display="none"; return; }
 
-  // Si on tape un numéro → normalisation
-  if(/^[0-9\s\-]+$/.test(val)){
-    let telSearch = val.replace(/\D/g,""); // on compare **uniquement les chiffres**
+  // ✅ Détection téléphone
+  if(/^[0-9\s\-]+$/.test(input)){
+    let telSearch = input.replace(/\D/g,""); // nettoyage
 
     let all = await getDocs(collection(db,"clients"));
     let results = [];
 
     all.forEach(doc=>{
       let c = doc.data();
-      let stored = c.tel.replace(/\D/g,""); // on normalise aussi le numéro stocké
+      let stored = c.tel.replace(/\D/g,""); // normalisation enregistrée
       if(stored.includes(telSearch)) results.push(c);
     });
 
@@ -75,12 +76,11 @@ async function rechercherClient(){
         suggest.innerHTML += `<div class="sug" onclick='remplirClient("${c.nom}","${c.tel}")'>${c.nom} — ${c.tel}</div>`;
       });
     }
-
-    suggest.style.display = "block";
+    suggest.style.display="block";
     return;
   }
 
-  // Sinon → recherche par nom (inchangée)
+  // ✅ Recherche NOM (inchangé)
   let q = query(collection(db, "clients"), orderBy("nom"), startAt(val), endAt(val + "\uf8ff"));
   let snap = await getDocs(q);
 
@@ -94,7 +94,7 @@ async function rechercherClient(){
     });
   }
 
-  suggest.style.display = "block";
+  suggest.style.display="block";
 }
 window.rechercherClient = rechercherClient;
 
