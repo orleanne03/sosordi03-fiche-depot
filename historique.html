@@ -5,12 +5,6 @@
 <title>Historique des dépôts</title>
 <link rel="stylesheet" href="style.css">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-
-<body class="history-page">
-<h1>📚 Historique des dépôts</h1>
-<div id="liste" class="history-container"></div>
-<div class="center"><a href="index.html" class="link return-link">⬅ Retour</a></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -36,29 +30,59 @@ async function supprimer(id){
   await deleteDoc(doc(db,"fiches",id));
   location.reload();
 }
-window.supprimer = supprimer;
 
 async function load(){
-  const snap = await getDocs(query(collection(db,"fiches"), orderBy("date","desc")));
-  const zone = document.getElementById("liste");
+  let snap = await getDocs(query(collection(db,"fiches"), orderBy("date","desc")));
+  let zone = document.getElementById("liste");
 
   snap.forEach(d=>{
-    const f = d.data();
-    const appareils = f.appareils.map(a=>`• ${a.type} — ${a.marque} ${a.modele}`).join("<br>");
-    const sauv = (f.sauvegarde==="Oui") ? `Oui (${f.sauvegardeItems.join(", ")})` : "Non";
-    const travaux = (f.travaux?.length) ? f.travaux.join("<br>") : "Aucun";
-    const mdp = f.motdepasse && f.motdepasse.trim() ? f.motdepasse : "Non renseigné";
+    let f = d.data();
+    let appareils = f.appareils.map(a=>`• ${a.type} — ${a.marque} ${a.modele}`).join("<br>");
+    let sauv = (f.sauvegarde==="Oui") ? `Oui (${f.sauvegardeItems.join(", ")})` : "Non";
+    let travaux = (f.travaux?.length) ? f.travaux.join("<br>") : "Aucun";
+    let mdp = f.motdepasse && f.motdepasse.trim() ? f.motdepasse : "Non renseigné";
 
     zone.innerHTML += `
 <div class="fiche-card accordion-card">
+
   <div class="fiche-header">
-    <div class="fiche-header-left">
-      <span class="color-tag" style="background:${f.couleur || 'transparent'}"></span>
-      <span class="fiche-name">${f.nom}</span>
-    </div>
-    <button class="delete-btn" onclick="event.stopPropagation(); supprimer('${d.id}')">🗑</button>
+    <span class="color-tag" style="background:${f.couleur || 'transparent'}"></span>
+    <span class="fiche-name">${f.nom}</span>
+    <button class="delete-btn" onclick="supprimer('${d.id}')">🗑</button>
   </div>
 
   <div class="fiche-content">
     <div class="fiche-date">📅 ${new Date(f.date).toLocaleDateString()}</div>
-    <p>📞 ${format
+
+    <p>📞 ${formatTelAffichage(f.tel)}</p>
+    <p>💻<br>${appareils.replace(/•/g,"🔹")}</p>
+    <p>💾 Sauvegarde : <strong>${sauv}</strong></p>
+    <p>🔐 Mot de passe : <strong>${mdp}</strong></p>
+    <p>📝 ${f.probleme}</p>
+    <p>🔧 Travaux :<br><strong>${travaux}</strong></p>
+  </div>
+
+</div>`;
+  });
+}
+window.supprimer = supprimer;
+load();
+</script>
+
+</head>
+
+<body class="history-page">
+<h1>📚 Historique des dépôts</h1>
+<div id="liste" class="history-container"></div>
+<div class="center"><a href="index.html" class="link return-link">⬅ Retour</a></div>
+
+<script>
+document.addEventListener("click", function(e){
+  let header = e.target.closest(".fiche-header");
+  if(!header) return;
+  header.parentNode.classList.toggle("open");
+});
+</script>
+
+</body>
+</html>
