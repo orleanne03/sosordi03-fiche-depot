@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Nettoyage Doublons Clients</title>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAR8PVlerANOGdzNBwZjj81I6Ajtbn63eI",
+  authDomain: "sosordi03-sav.firebaseapp.com",
+  projectId: "sosordi03-sav"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+async function nettoyer() {
+  const snap = await getDocs(collection(db, "clients"));
+  const seen = new Set();
+  let count = 0;
+
+  for (let d of snap.docs) {
+    const data = d.data();
+    const nom = (data.nom || "").toUpperCase();
+    const tel = (data.tel || "").replace(/\D/g,"");
+    const key = nom + "|" + tel;
+
+    if(seen.has(key)){
+      await deleteDoc(d.ref);
+      count++;
+    } else {
+      seen.add(key);
+    }
+  }
+  alert("Nettoyage terminé. Doublons supprimés : " + count);
+}
+window.nettoyer = nettoyer;
+</script>
+</head>
+
+<body style="font-family:sans-serif;padding:20px;">
+<h2>Nettoyage des doublons Clients</h2>
+<p>Appuyez sur le bouton ci-dessous pour supprimer les doublons nom + téléphone.</p>
+<button onclick="nettoyer()" style="padding:10px 20px;font-size:18px;">Nettoyer</button>
+</body>
+</html>
