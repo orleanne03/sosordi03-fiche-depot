@@ -45,11 +45,13 @@ async function load(){
     zone.innerHTML += `
 <div class="fiche-card accordion-card">
 
-  <div class="fiche-header" onclick="this.nextElementSibling.classList.toggle('open')">
-      <span class="color-tag" style="background:${f.couleur || 'transparent'}"></span>
-      <span class="fiche-name">${f.nom}</span>
-      <button class="delete-btn" onclick="event.stopPropagation(); supprimer('${d.id}')">🗑</button>
+  <div class="fiche-header">
+  <div class="fiche-header-left">
+    <span class="color-tag" style="background:${f.couleur || 'transparent'}"></span>
+    <span class="fiche-name">${f.nom}</span>
   </div>
+  <button class="delete-btn" onclick="supprimer('${d.id}')">🗑</button>
+</div>
 
   <div class="fiche-content">
     <div class="fiche-date">📅 ${new Date(f.date).toLocaleDateString()}</div>
