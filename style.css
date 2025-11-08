@@ -249,59 +249,25 @@ body.history-page{
 .history-page .delete-btn:hover{
   background:#e05252 !important;
 }
-/* Séparateur discret avant Travaux */
-.history-page .fiche-card p:nth-last-of-type(1) {
-  border-top:1px solid rgba(0,0,0,.12);
-  padding-top:10px;
-  margin-top:14px;
-}
-/* Ligne séparatrice avant Travaux */
-.history-page .fiche-card p:last-of-type {
-  border-top: 1px solid rgba(0,0,0,.18) !important;
-  padding-top: 12px !important;
-  margin-top: 16px !important;
-}
-/* Ligne séparatrice avant Travaux — version forcée */
-.history-page .fiche-card p:has(> strong) {
-  border-top: 1px solid rgba(0,0,0,.22) !important;
-  padding-top: 12px !important;
-  margin-top: 16px !important;
-}
-/* Ligne sous numéro de téléphone */
-.history-page .fiche-card p:nth-of-type(2) {
-  border-bottom: 1px solid rgba(0,0,0,.18) !important;
-  padding-bottom: 12px !important;
-  margin-bottom: 14px !important;
-}
+/* ———————————————————————————
+   SÉPARATEURS PROPRES ET UNIQUES
+   ——————————————————————————— */
 
-/* Ligne sous Mot de passe */
-.history-page .fiche-card p:has(> strong):not(:contains('Travaux')) {
-  border-bottom: 1px solid rgba(0,0,0,.18) !important;
-  padding-bottom: 12px !important;
-  margin-bottom: 14px !important;
-}
-
-/* Ligne au-dessus de Travaux (déjà validée) */
-.history-page .fiche-card p:last-of-type {
-  border-top: 1px solid rgba(0,0,0,.22) !important;
-  padding-top: 12px !important;
-  margin-top: 16px !important;
-}
-/* Trait sous le numéro de téléphone (1er <p>) */
+/* Trait sous téléphone */
 .history-page .fiche-card p:nth-of-type(1) {
   border-bottom: 1px solid rgba(0,0,0,.18) !important;
   padding-bottom: 10px !important;
   margin-bottom: 12px !important;
 }
 
-/* Trait sous le mot de passe (4ème <p>) */
+/* Trait sous mot de passe */
 .history-page .fiche-card p:nth-of-type(4) {
   border-bottom: 1px solid rgba(0,0,0,.18) !important;
   padding-bottom: 10px !important;
   margin-bottom: 12px !important;
 }
 
-/* Trait au-dessus de Travaux (6ème <p>) */
+/* Trait au-dessus de Travaux */
 .history-page .fiche-card p:nth-of-type(6) {
   border-top: 1px solid rgba(0,0,0,.22) !important;
   padding-top: 12px !important;
