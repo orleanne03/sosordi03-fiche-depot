@@ -681,3 +681,31 @@ label[for="nom"]::before {
 .accordion-header {
   padding: 8px 14px !important;
 }
+/* --- Compactage supplémentaire des blocs Travaux --- */
+
+/* Chaque ligne de travail */
+.checkbox-group label {
+  padding: 6px 12px !important;   /* hauteur interne */
+  margin: 4px 0 !important;       /* espace vertical réduit */
+  border-radius: 10px !important;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f9fbff;
+  border: 1px solid #d8e3f0;
+}
+
+/* Le groupe entier prend moins d’espace */
+.checkbox-group {
+  gap: 4px !important;  /* encore plus compact */
+}
+
+/* Moins d'air autour du contenu */
+.accordion-content {
+  padding: 4px 10px !important;
+}
+
+/* Titre un peu plus serré */
+.accordion-header {
+  padding: 6px 14px !important;
+}
