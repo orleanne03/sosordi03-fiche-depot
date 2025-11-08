@@ -11,7 +11,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { 
   getFirestore, collection, addDoc, getDocs, query, orderBy, startAt, endAt,
-  writeBatch, doc, setDoc, where 
+  writeBatch, doc, setDoc, where
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -29,10 +29,9 @@ async function ajouterNouveauClient(){
   if(!search.value.trim()) return alert("Nom vide.");
   if(!tel.value.trim()) return alert("Téléphone manquant.");
 
-  // Téléphone stocké **sans tirets**
   await setDoc(doc(collection(db,"clients")),{
     nom: search.value.trim().toUpperCase(),
-    tel: tel.value.replace(/\D/g,"") // <- IMPORTANT
+    tel: tel.value.trim()
   });
 
   nom.value = search.value.toUpperCase();
@@ -42,10 +41,10 @@ async function ajouterNouveauClient(){
 window.ajouterNouveauClient = ajouterNouveauClient;
 
 // ----------------------------------------------------------
-// FORMAT TÉLÉPHONE (affichage seulement)
+// FORMAT TÉLÉPHONE
 function formatTel(){
-   let v = tel.value.replace(/\D/g,"").slice(0,10);
-   tel.value = v.replace(/(..)(?=.)/g,"$1-");
+  let v = tel.value.replace(/\D/g,"").slice(0,10);
+  tel.value = v.replace(/(..)(?=.)/g,"$1-");
 }
 
 // ----------------------------------------------------------
@@ -56,14 +55,14 @@ async function rechercherClient(){
   if(val.length < 2){ suggest.style.display="none"; return; }
 
   let snap;
+  let raw = search.value.trim(); // téléphone en format exact tapé
 
-  // Si saisie numérique -> recherche sur tel (stocké SANS tirets)
-  if(/^[0-9\s\-]+$/.test(val)){
-    let telClean = val.replace(/\D/g,"");
-    let q = query(collection(db,"clients"), where("tel","==", telClean));
+  // Si saisie est un numéro → recherche sur téléphone EXACT
+  if(/^[0-9 \-]+$/.test(raw)){
+    let q = query(collection(db,"clients"), where("tel","==", raw));
     snap = await getDocs(q);
-  } 
-  else {
+  } else {
+    // Sinon recherche par nom (inchangé)
     let q = query(collection(db, "clients"), orderBy("nom"), startAt(val), endAt(val + "\uf8ff"));
     snap = await getDocs(q);
   }
@@ -74,9 +73,7 @@ async function rechercherClient(){
   } else {
     snap.forEach(doc=>{
       let c = doc.data();
-      // Affichage téléphone remis en format propre
-      let t = c.tel.replace(/(..)(?=.)/g,"$1-");
-      suggest.innerHTML += `<div class="sug" onclick='remplirClient("${c.nom}","${t}")'>${c.nom} — ${t}</div>`;
+      suggest.innerHTML += `<div class="sug" onclick='remplirClient("${c.nom}","${c.tel}")'>${c.nom} — ${c.tel}</div>`;
     });
   }
 
@@ -122,7 +119,7 @@ let travauxSelectionnes = [...document.querySelectorAll('.trav:checked')].map(c 
 
 await addDoc(collection(db,"fiches"),{
   nom: nom.value,
-  tel: tel.value.replace(/\D/g,""), // stock propre
+  tel: tel.value,
   appareils: appareils,
   probleme: prob.value,
   sauvegarde: sauvegardeChoix,
@@ -137,14 +134,15 @@ location.href="historique.html";
 window.creer = creer;
 
 // ----------------------------------------------------------
+// FERMETURE LISTE
 document.addEventListener("click", e=>{ if(!e.target.closest("#search") && !e.target.closest("#suggest")) suggest.style.display="none"; });
 search.addEventListener("input", ()=>{ if(search.value.trim().length < 2) suggest.style.display="none"; });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.display="none"; });
 
 </script>
 
-<!-- MARQUES (inchangé) -->
 <script>
+// MARQUES
 const marquesParType = {
   "Ordinateur Portable": ["Acer","Asus","HP","Lenovo","Dell","MSI","Apple","Samsung","Toshiba","Autre"],
   "Ordinateur Fixe": ["Assembler","Acer","Asus","HP","Dell","Lenovo","Autre"],
@@ -164,4 +162,85 @@ majMarques();
 </head>
 <body>
 
-<!-- TON HTML D’ORIGINE CI-DESSOUS NE CHANGE PAS -->
+<div class="container">
+<h1>🖥️ Fiche de Dépôt - sosordi03</h1>
+
+<input type="text" id="search" class="input" placeholder="🔍 Rechercher un client..." oninput="rechercherClient()">
+<div id="suggest" class="suggest-box"></div>
+
+<div class="card">
+
+<label>Nom du client :</label>
+<input id="nom" class="input">
+
+<label>Téléphone :</label>
+<input id="tel" class="input" maxlength="14" oninput="formatTel();">
+
+<label>Mot de passe (optionnel) :</label>
+<input id="mdp" class="input">
+
+<div class="card-block">
+<label>Ajouter un appareil :</label>
+<div class="grid-3">
+  <div><label>Type :</label><select id="type" class="input" onchange="majMarques()">
+    <option>Ordinateur Portable</option><option>Ordinateur Fixe</option><option>Tablette</option>
+    <option>Disque dur externe</option><option>Écran</option><option>Imprimante</option><option>Autre</option>
+  </select></div>
+  <div><label>Marque :</label><select id="marque" class="input"></select></div>
+  <div><label>Modèle :</label><input id="modele" class="input"></div>
+</div>
+<button class="secondary small-btn" onclick="ajouterAppareil()">➕ Ajouter cet appareil</button>
+<div id="listeAppareils"></div>
+</div>
+
+<div class="card-block">
+<label>Sauvegarde :</label><br>
+<input type="radio" name="sauv" value="Non" checked> Non
+<input type="radio" name="sauv" value="Oui"> Oui
+
+<div id="optionsSauvegarde" style="display:none;margin-top:6px;">
+  <label><input type="checkbox" name="sauv-item" value="Documents"> Documents</label><br>
+  <label><input type="checkbox" name="sauv-item" value="Images"> Images</label><br>
+  <label><input type="checkbox" name="sauv-item" value="Vidéos"> Vidéos</label><br>
+  <label><input type="checkbox" name="sauv-item" value="Favoris"> Favoris</label><br>
+  <label><input type="checkbox" name="sauv-item" value="Mots de passe"> Mots de passe</label><br>
+</div>
+</div>
+
+<div class="accordion">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    Travaux à réaliser :
+    <span class="arrow">▼</span>
+  </div>
+
+  <div class="accordion-content">
+    <div class="checkbox-group">
+      <label><input type="checkbox" class="trav" value="Migration Windows 11"> Migration Windows 11</label>
+      <label><input type="checkbox" class="trav" value="Réinstallation complète Windows"> Réinstallation complète Windows</label>
+      <label><input type="checkbox" class="trav" value="Nettoyage système + Optimisation"> Nettoyage + Optimisation</label>
+      <label><input type="checkbox" class="trav" value="Suppression virus / malwares"> Suppression virus / malwares</label>
+      <label><input type="checkbox" class="trav" value="Installation SSD + clonage"> Installation SSD + clonage</label>
+      <label><input type="checkbox" class="trav" value="Sauvegarde + Restauration"> Sauvegarde + Restauration</label>
+      <label><input type="checkbox" class="trav" value="Ajout / Changement RAM"> Ajout / Changement RAM</label>
+      <label><input type="checkbox" class="trav" value="Autre"> Autre…</label>
+    </div>
+  </div>
+</div>
+
+<label>Description du problème :</label>
+<textarea id="prob" class="textarea" rows="4"></textarea>
+
+<button class="primary" onclick="creer()">Créer la fiche</button>
+</div>
+
+<div class="center"><a href="historique.html" class="link">📚 Voir l'historique</a></div>
+</div>
+
+<script>
+function toggleAccordion(el){
+  el.parentNode.classList.toggle("open");
+}
+</script>
+
+</body>
+</html>
