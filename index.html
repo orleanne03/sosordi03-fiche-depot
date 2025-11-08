@@ -11,7 +11,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { 
   getFirestore, collection, addDoc, getDocs, query, orderBy, startAt, endAt,
-  writeBatch, doc, setDoc, where
+  writeBatch, doc, setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -48,53 +48,54 @@ function formatTel(){
 }
 
 // ----------------------------------------------------------
-// RECHERCHE CLIENT (NOM OU TÉLÉPHONE)
+// ✅ RECHERCHE CLIENT (Nom OU Téléphone Normalisé)
 async function rechercherClient(){
   let input = search.value.trim();
-  let val = input.toUpperCase();
+  let searchUpper = input.toUpperCase();
   suggest.innerHTML = "";
-  if(val.length < 2){ suggest.style.display="none"; return; }
+  if(input.length < 2){ suggest.style.display="none"; return; }
 
-  // ✅ Détection téléphone
-  if(/^[0-9\s\-]+$/.test(input)){
-    let telSearch = input.replace(/\D/g,""); // nettoyage
+  let all = await getDocs(collection(db,"clients"));
+  let results = [];
 
-    let all = await getDocs(collection(db,"clients"));
-    let results = [];
-
+  // --- Recherche Téléphone ---
+  let telSearch = input.replace(/\D/g,"");
+  if(telSearch.length >= 2){
     all.forEach(doc=>{
       let c = doc.data();
-      let stored = c.tel.replace(/\D/g,""); // normalisation enregistrée
+      let stored = (c.tel || "").replace(/\D/g,"");
       if(stored.includes(telSearch)) results.push(c);
     });
-
-    if(results.length === 0){
-      suggest.innerHTML = `<div class="sug" style="color:#b00;">Aucun résultat</div>
-      <button class="primary small-btn" style="width:100%;margin:6px 0;" onclick="ajouterNouveauClient()">➕ Ajouter ce client</button>`;
-    } else {
-      results.forEach(c=>{
-        suggest.innerHTML += `<div class="sug" onclick='remplirClient("${c.nom}","${c.tel}")'>${c.nom} — ${c.tel}</div>`;
-      });
-    }
-    suggest.style.display="block";
-    return;
   }
 
-  // ✅ Recherche NOM (inchangé)
-  let q = query(collection(db, "clients"), orderBy("nom"), startAt(val), endAt(val + "\uf8ff"));
-  let snap = await getDocs(q);
+  // --- Recherche Nom (inchangée) ---
+  all.forEach(doc=>{
+    let c = doc.data();
+    if(c.nom && c.nom.toUpperCase().includes(searchUpper)) results.push(c);
+  });
 
-  if(snap.empty){
+  // --- Suppression doublons ---
+  let uniques = [];
+  let seen = new Set();
+  results.forEach(c=>{
+    let key = c.nom+"|"+c.tel;
+    if(!seen.has(key)){
+      seen.add(key);
+      uniques.push(c);
+    }
+  });
+
+  // --- Affichage ---
+  if(uniques.length === 0){
     suggest.innerHTML = `<div class="sug" style="color:#b00;">Aucun résultat</div>
     <button class="primary small-btn" style="width:100%;margin:6px 0;" onclick="ajouterNouveauClient()">➕ Ajouter ce client</button>`;
   } else {
-    snap.forEach(doc=>{
-      let c = doc.data();
+    uniques.forEach(c=>{
       suggest.innerHTML += `<div class="sug" onclick='remplirClient("${c.nom}","${c.tel}")'>${c.nom} — ${c.tel}</div>`;
     });
   }
 
-  suggest.style.display="block";
+  suggest.style.display = "block";
 }
 window.rechercherClient = rechercherClient;
 
