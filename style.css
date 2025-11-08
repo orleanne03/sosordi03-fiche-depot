@@ -342,3 +342,33 @@ body.history-page{
 .fiche-header .delete-btn {
   flex-shrink: 0;
 }
+/* --- Accordéon Historique --- */
+.accordion-card .fiche-content {
+  display: none;
+}
+
+.accordion-card.open .fiche-content {
+  display: block;
+}
+
+/* Alignement couleur + nom + corbeille */
+.fiche-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  padding-bottom: 4px;
+}
+
+.fiche-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.color-tag {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: inline-block;
+}
