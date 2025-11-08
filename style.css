@@ -438,3 +438,57 @@ input[type="checkbox"]:checked::after {
   align-items: center;
   gap: 8px;
 }
+/* --- TITRES DE SECTION PLUS PRO --- */
+.container label:not(.checkbox-group label):not(.radio-group label) {
+  display: block;
+  font-weight: 600;
+  font-size: 18px;
+  color: #1d3557;
+  margin-top: 20px;
+  margin-bottom: 6px;
+}
+
+/* Petit séparateur visuel entre blocs */
+.card-block {
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 2px solid rgba(0,0,0,.07);
+}
+
+/* Titre principal */
+h1 {
+  font-size: 28px;
+  font-weight: 700;
+  color: #143658;
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+/* Sous-titre (ex : “Ajouter un appareil”) */
+.card-block > label:first-child,
+.accordion-header {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+  color: #143658 !important;
+  margin-bottom: 10px !important;
+}
+
+/* Icône devant les titres importants */
+.card-block > label:first-child::before {
+  content: "📦 ";
+}
+
+.accordion-header::before {
+  content: "🛠️ ";
+}
+
+/* Alignement plus propre */
+.accordion-header {
+  padding: 14px 12px;
+  border-radius: 10px;
+  background:#f4f7fb;
+  border:1px solid #d5dcea;
+}
+.accordion-header:hover {
+  background:#e8eef7;
+}
