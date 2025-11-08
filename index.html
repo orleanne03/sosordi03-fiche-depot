@@ -44,10 +44,10 @@ function formatTel(){
   tel.value = v.replace(/(..)(?=.)/g,"$1-");
 }
 
-// ✅ NOUVELLE RECHERCHE (Nom + Téléphone)
+// ✅ RECHERCHE (Nom + Téléphone)
 async function rechercherClient(){
   let input = search.value.trim().toUpperCase();
-  let telClean = search.value.replace(/\D/g,""); // numéro sans tirets
+  let telClean = search.value.replace(/\D/g,"");
 
   suggest.innerHTML = "";
   if(input.length < 2 && telClean.length < 2){ suggest.style.display="none"; return; }
@@ -161,7 +161,9 @@ majMarques();
 <h1>🖥️ Fiche de Dépôt - sosordi03</h1>
 
 <input type="text" id="search" class="input" placeholder="🔍 Rechercher un client..." oninput="rechercherClient()">
-<div id="suggest" class="suggest-box"></div>
+
+<!-- ✅ FIX LISTE CLIENTS -->
+<div id="suggest" class="suggest-box" style="z-index:9999; position:absolute; top:92px;"></div>
 
 <div class="card">
 
