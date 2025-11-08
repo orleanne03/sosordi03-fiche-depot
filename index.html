@@ -149,7 +149,7 @@ document.querySelectorAll('input[name="sauv"]').forEach(r=>{
 });
 
 // ----------------------------------------------------------
-// CRÉATION FICHE
+// ✅ AJOUT DU CHAMP COULEUR DANS LA FICHE
 async function creer(){
   if(!nom.value.trim()) return alert("Nom manquant");
   if(!tel.value.trim()) return alert("Téléphone manquant");
@@ -168,6 +168,7 @@ await addDoc(collection(db,"fiches"),{
   sauvegardeItems: sauvItems,
   travaux: travauxSelectionnes,
   motdepasse: mdp.value.trim() || "",
+  couleur: couleur.value || "",  // ✅ ← ajout
   date: new Date().toISOString()
 });
 
@@ -217,6 +218,16 @@ majMarques();
 
 <label>Téléphone :</label>
 <input id="tel" class="input" maxlength="14" oninput="formatTel();">
+
+<label>Couleur (pour repérage atelier) :</label>
+<select id="couleur" class="input">
+  <option value="">Aucune</option>
+  <option value="red">🔴 Rouge</option>
+  <option value="blue">🔵 Bleu</option>
+  <option value="green">🟢 Vert</option>
+  <option value="yellow">🟡 Jaune</option>
+  <option value="orange">🟠 Orange</option>
+</select>
 
 <label>Mot de passe (optionnel) :</label>
 <input id="mdp" class="input">
