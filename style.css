@@ -295,3 +295,26 @@ body.history-page{
   vertical-align:middle;
   border:1px solid rgba(0,0,0,.25);
 }
+/* Accordéon sur fiches */
+.accordion-card .fiche-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  cursor:pointer;
+  padding:6px 4px;
+}
+
+.accordion-card .fiche-header .fiche-name {
+  font-weight:700;
+  font-size:1.25rem;
+  margin-left:6px;
+}
+
+.accordion-card .fiche-content {
+  display:none;
+  margin-top:12px;
+}
+
+.accordion-card .fiche-content.open {
+  display:block;
+}
