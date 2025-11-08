@@ -492,3 +492,88 @@ h1 {
 .accordion-header:hover {
   background:#e8eef7;
 }
+/* --- STYLE FUN / ATELIER VISUEL --- */
+
+/* Titres de section */
+.container label:not(.checkbox-group label):not(.radio-group label) {
+  display:block;
+  font-weight:700;
+  font-size:19px;
+  margin-top:22px;
+  margin-bottom:8px;
+  color:#0d3157;
+}
+
+/* Cartouche de section */
+.card-block {
+  background:#f7faff;
+  border:2px dashed #cfe2ff;
+  padding:18px;
+  border-radius:14px;
+  margin-top:24px;
+}
+
+/* Titre "Ajouter un appareil" + icône */
+.card-block > label:first-child::before {
+  content:"🧰 ";
+}
+
+/* Titre "Sauvegarde" */
+.card-block:nth-of-type(2) > label:first-child::before {
+  content:"💾 ";
+}
+
+/* Titre "Travaux" */
+.accordion-header::before {
+  content:"🔧 ";
+}
+
+/* Travaux accordéon */
+.accordion-header {
+  background:#eef6ff;
+  border:2px solid #cfe2ff;
+  padding:14px 14px;
+  font-weight:700;
+  color:#143658;
+  border-radius:12px;
+  cursor:pointer;
+}
+.accordion-header:hover {
+  background:#dceeff;
+}
+
+/* Radio et cases plus lisibles */
+input[type="radio"], input[type="checkbox"] {
+  transform:scale(1.25);
+  margin-right:6px;
+}
+
+/* Champs plus joyeux */
+.input, .textarea, select {
+  border-radius:12px;
+  border:2px solid #d3e3f7;
+  background:#f9fbff;
+  transition:.25s;
+}
+.input:focus, .textarea:focus, select:focus {
+  border-color:#7aa9ff;
+  background:#ffffff;
+  box-shadow:0 0 6px rgba(122,169,255,.6);
+}
+
+/* Bouton Ajouter appareil = couleur atelier */
+.secondary {
+  background:#ff6b6b !important;
+}
+.secondary:hover {
+  background:#e35959 !important;
+}
+
+/* Bouton principal */
+.primary {
+  background:#0078d7;
+  box-shadow:0 4px 12px rgba(0,120,215,.35);
+}
+.primary:hover {
+  background:#005fa3;
+}
