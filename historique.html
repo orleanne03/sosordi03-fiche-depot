@@ -43,24 +43,25 @@ async function load(){
     let mdp = f.motdepasse && f.motdepasse.trim() ? f.motdepasse : "Non renseigné";
 
     zone.innerHTML += `
-<div class="fiche-card">
-  <button class="delete-btn" onclick="supprimer('${d.id}')">🗑</button>
-  <div class="fiche-name">
-    <span class="color-tag" style="background:${f.couleur || 'transparent'}"></span>
-    ${f.nom}
+<div class="fiche-card accordion-card">
+
+  <div class="fiche-header" onclick="this.nextElementSibling.classList.toggle('open')">
+      <span class="color-tag" style="background:${f.couleur || 'transparent'}"></span>
+      <span class="fiche-name">${f.nom}</span>
+      <button class="delete-btn" onclick="event.stopPropagation(); supprimer('${d.id}')">🗑</button>
   </div>
-  <div class="fiche-date">📅 ${new Date(f.date).toLocaleDateString()}</div>
 
-  <p>📞 ${formatTelAffichage(f.tel)}</p>
-  <p>💻<br>${appareils.replace(/•/g,"🔹")}</p>
-  <p>💾 Sauvegarde : <strong>${sauv}</strong></p>
-  <p>🔐 Mot de passe : <strong>${mdp}</strong></p>
+  <div class="fiche-content">
+    <div class="fiche-date">📅 ${new Date(f.date).toLocaleDateString()}</div>
 
-  <!-- ✅ Travaux remonté ici -->
-  <p>🔧 Travaux :<br> <strong>${travaux}</strong></p>
+    <p>📞 ${formatTelAffichage(f.tel)}</p>
+    <p>💻<br>${appareils.replace(/•/g,"🔹")}</p>
+    <p>💾 Sauvegarde : <strong>${sauv}</strong></p>
+    <p>🔐 Mot de passe : <strong>${mdp}</strong></p>
+    <p>📝 ${f.probleme}</p>
+    <p>🔧 Travaux :<br> <strong>${travaux}</strong></p>
+  </div>
 
-  <!-- ✅ Description ensuite -->
-  <p>📝 ${f.probleme}</p>
 </div>`;
   });
 }
