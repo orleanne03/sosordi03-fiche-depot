@@ -46,17 +46,21 @@ async function load(){
 <div class="fiche-card">
   <button class="delete-btn" onclick="supprimer('${d.id}')">🗑</button>
   <div class="fiche-name">
-  <span class="color-tag" style="background:${f.couleur || 'transparent'}"></span>
-  ${f.nom}
-</div>
+    <span class="color-tag" style="background:${f.couleur || 'transparent'}"></span>
+    ${f.nom}
+  </div>
   <div class="fiche-date">📅 ${new Date(f.date).toLocaleDateString()}</div>
 
   <p>📞 ${formatTelAffichage(f.tel)}</p>
   <p>💻<br>${appareils.replace(/•/g,"🔹")}</p>
   <p>💾 Sauvegarde : <strong>${sauv}</strong></p>
   <p>🔐 Mot de passe : <strong>${mdp}</strong></p>
-  <p>📝 ${f.probleme}</p>
+
+  <!-- ✅ Travaux remonté ici -->
   <p>🔧 Travaux :<br> <strong>${travaux}</strong></p>
+
+  <!-- ✅ Description ensuite -->
+  <p>📝 ${f.probleme}</p>
 </div>`;
   });
 }
