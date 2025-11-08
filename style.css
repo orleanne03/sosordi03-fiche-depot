@@ -249,3 +249,9 @@ body.history-page{
 .history-page .delete-btn:hover{
   background:#e05252 !important;
 }
+/* Séparateur discret avant Travaux */
+.history-page .fiche-card p:nth-last-of-type(1) {
+  border-top:1px solid rgba(0,0,0,.12);
+  padding-top:10px;
+  margin-top:14px;
+}
