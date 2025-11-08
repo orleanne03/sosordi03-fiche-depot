@@ -80,9 +80,9 @@ async function rechercherClient(){
   }
 
   all.forEach(doc=>{
-    let c = doc.data();
-    if(c.nom && c.nom.toUpperCase().includes(searchUpper)) results.push(c);
-  });
+  let c = doc.data();
+  if(c.nom && c.nom.toUpperCase().startsWith(searchUpper)) results.push(c);
+});
 
   let uniques = [];
   let seen = new Set();
