@@ -10,7 +10,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { 
-  getFirestore, collection, addDoc, getDocs, writeBatch, doc 
+  getFirestore, collection, addDoc, getDocs, setDoc, doc 
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -20,7 +20,7 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-window.db = getFirestore(app);
+const db = getFirestore(app);
 
 // ===================== CLIENT =====================
 
@@ -132,7 +132,7 @@ function afficherAppareils(){
 function supprimerAppareil(i){ appareils.splice(i,1); afficherAppareils(); }
 window.ajouterAppareil = ajouterAppareil;
 
-// ---- MARQUES PAR TYPE (inchangé) ----
+// ---- MARQUES PAR TYPE ----
 const marquesParType = {
   "Ordinateur Portable": ["Acer","Asus","HP","Lenovo","Dell","MSI","Apple","Samsung","Toshiba","Autre"],
   "Ordinateur Fixe": ["Assembler","Acer","Asus","HP","Dell","Lenovo","Autre"],
@@ -143,32 +143,44 @@ const marquesParType = {
   "Autre": ["Autre"]
 };
 
-// ---- ✅ AJOUT : MODELES PAR MARQUE ----
-const modelesParMarque = {
-  "Acer": ["Aspire","Swift","Nitro","Predator","Spin","Extensa"],
-  "Asus": ["VivoBook","ZenBook","ROG","TUF Gaming","ExpertBook"],
-  "HP": ["Pavilion","Envy","Omen","ProBook","EliteBook","Spectre"],
-  "Lenovo": ["IdeaPad","ThinkPad","Legion","Yoga"],
-  "Dell": ["Inspiron","XPS","Latitude","Vostro","Alienware"],
-  "MSI": ["Modern","Prestige","Bravo","Katana","Raider","Stealth"],
-  "Apple": ["MacBook Air","MacBook Pro","iMac"],
-  "Samsung": ["Galaxy Book","Notebook Plus","Odyssey"],
-  "Toshiba": ["Satellite","Tecra","Portege"],
-  "Autre": []
-};
+// ---- ✅ MODELES PAR MARQUE AVEC FIRESTORE ----
+let modelesParMarque = {};
+
+async function chargerModeles(){
+  modelesParMarque = {};
+  let snap = await getDocs(collection(db,"modeles"));
+  snap.forEach(d=> modelesParMarque[d.id] = d.data().liste );
+}
+await chargerModeles();
+
+// Si aucune donnée → liste de base
+for(let m in modelesParMarque) if(!modelesParMarque[m]) modelesParMarque[m]=[];
 
 function majMarques(){
   marque.innerHTML = "";
   marquesParType[type.value].forEach(m=> marque.innerHTML += `<option>${m}</option>`);
   majModeles();
 }
+
 function majModeles(){
-  modele.innerHTML = "";
-  (modelesParMarque[marque.value]||[]).forEach(md=> modele.innerHTML += `<option>${md}</option>`);
+  let liste = modelesParMarque[marque.value] || [];
+  document.getElementById("listeModeles").innerHTML = liste.map(m => `<option value="${m}">`).join("");
 }
 window.majMarques = majMarques;
 window.majModeles = majModeles;
 majMarques();
+
+// ✅ AJOUT PERMANENT DE NOUVEAUX MODELES
+async function enregistrerNouveauModele(){
+  let m = modele.value.trim();
+  let marqueChoisie = marque.value;
+  if(!m) return;
+  if(!modelesParMarque[marqueChoisie]) modelesParMarque[marqueChoisie] = [];
+  if(!modelesParMarque[marqueChoisie].includes(m)){
+    modelesParMarque[marqueChoisie].push(m);
+    await setDoc(doc(db,"modeles",marqueChoisie), { liste:modelesParMarque[marqueChoisie] });
+  }
+}
 
 // ===================== SAUVEGARDE =====================
 
@@ -182,6 +194,8 @@ async function creer(){
   if(!nom.value.trim()) return alert("Nom manquant");
   if(!tel.value.trim()) return alert("Téléphone manquant");
   if(appareils.length === 0) return alert("Ajoute au moins un appareil");
+
+await enregistrerNouveauModele();
 
 let sauvegardeChoix = document.querySelector('input[name="sauv"]:checked')?.value || "Non";
 let sauvItems = [...document.querySelectorAll('input[name="sauv-item"]:checked')].map(c => c.value);
@@ -243,19 +257,18 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.dis
 <label>Ajouter un appareil :</label>
 <div class="grid-3">
   <div><label>Type :</label><select id="type" class="input" onchange="majMarques()">
-  <option value="" selected disabled>-- Choisir un type --</option>
-  <option>Ordinateur Portable</option>
-  <option>Ordinateur Fixe</option>
-  <option>Tablette</option>
-  <option>Disque dur externe</option>
-  <option>Écran</option>
-  <option>Imprimante</option>
-  <option>Autre</option>
-</select></div>
+    <option value="" selected disabled>-- Choisir un type --</option>
+    <option>Ordinateur Portable</option><option>Ordinateur Fixe</option><option>Tablette</option>
+    <option>Disque dur externe</option><option>Écran</option><option>Imprimante</option><option>Autre</option>
+  </select></div>
 
   <div><label>Marque :</label><select id="marque" class="input" onchange="majModeles()"></select></div>
 
-  <div><label>Modèle :</label><select id="modele" class="input"></select></div>
+  <!-- ✅ CHAMP MODÈLE AVEC LISTE + SAISIE LIBRE -->
+  <div><label>Modèle :</label>
+  <input id="modele" class="input" list="listeModeles" placeholder="Saisir ou choisir">
+  <datalist id="listeModeles"></datalist>
+  </div>
 </div>
 
 <button class="secondary small-btn" onclick="ajouterAppareil()">➕ Ajouter cet appareil</button>
@@ -300,6 +313,7 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.dis
 <textarea id="prob" class="textarea" rows="4"></textarea>
 
 <button class="primary" onclick="creer()">Créer la fiche</button>
+
 </div>
 
 <div class="center"><a href="historique.html" class="link">📚 Voir l'historique</a></div>
