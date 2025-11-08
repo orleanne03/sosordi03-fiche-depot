@@ -249,27 +249,40 @@ body.history-page{
 .history-page .delete-btn:hover{
   background:#e05252 !important;
 }
-/* ———————————————————————————
-   SÉPARATEURS PROPRES ET UNIQUES
-   ——————————————————————————— */
+ /* --- Séparateurs dans l'historique --- */
+.history-page .fiche-card p { margin: 0; padding: 6px 0; }
 
-/* Trait sous téléphone */
+/* Sous le N° de téléphone (1er <p>) */
 .history-page .fiche-card p:nth-of-type(1) {
-  border-bottom: 1px solid rgba(0,0,0,.18) !important;
-  padding-bottom: 10px !important;
-  margin-bottom: 12px !important;
+  border-bottom: 1px solid rgba(0,0,0,.16);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
 }
 
-/* Trait sous mot de passe */
+/* Sous "Ordinateur ..." (2e <p>) → crée le trait AU-DESSUS de Sauvegarde */
+.history-page .fiche-card p:nth-of-type(2) {
+  border-bottom: 1px solid rgba(0,0,0,.16);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+
+/* Sous "Sauvegarde" (3e <p>) */
+.history-page .fiche-card p:nth-of-type(3) {
+  border-bottom: 1px solid rgba(0,0,0,.16);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+
+/* Sous "Mot de passe" (4e <p>) */
 .history-page .fiche-card p:nth-of-type(4) {
-  border-bottom: 1px solid rgba(0,0,0,.18) !important;
-  padding-bottom: 10px !important;
-  margin-bottom: 12px !important;
+  border-bottom: 1px solid rgba(0,0,0,.16);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
 }
 
-/* Trait au-dessus de Travaux */
+/* Au-DESSUS de "Travaux" (6e <p>, puisqu'il est en bas) */
 .history-page .fiche-card p:nth-of-type(6) {
-  border-top: 1px solid rgba(0,0,0,.22) !important;
-  padding-top: 12px !important;
-  margin-top: 16px !important;
+  border-top: 1px solid rgba(0,0,0,.2);
+  padding-top: 12px;
+  margin-top: 16px;
 }
