@@ -7,10 +7,11 @@
 <link rel="manifest" href="manifest.json">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
+<!-- Firebase -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { 
-  getFirestore, collection, addDoc, getDocs, setDoc, doc 
+import {
+  getFirestore, collection, addDoc, getDocs, setDoc, doc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -20,49 +21,57 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-window.db = getFirestore(app);
+const db = getFirestore(app);
+window.db = db; // exposé pour les fonctions non-module
+</script>
 
-// ✅ AJOUT CLIENT
-async function ajouterNouveauClient(){
-  if(!search.value.trim()) return alert("Nom vide.");
-  if(!tel.value.trim()) return alert("Téléphone manquant.");
-
-  await setDoc(doc(collection(db,"clients")),{
-    nom: search.value.trim().toUpperCase(),
-    tel: tel.value.trim()
-  });
-
-  nom.value = search.value.toUpperCase();
-  suggest.style.display="none";
-  alert("✅ Client ajouté !");
-}
-window.ajouterNouveauClient = ajouterNouveauClient;
-
-// ✅ FORMAT TELEPHONE
+<script>
+// ===============================
+// UI helpers
+// ===============================
 function formatTel(){
-  let v = tel.value.replace(/\D/g,"").slice(0,10);
+  const v = tel.value.replace(/\D/g,"").slice(0,10);
   tel.value = v.replace(/(..)(?=.)/g,"$1-");
 }
 
-// ✅ RECHERCHE (Nom + Téléphone)
+// Fermer la liste si on clique ailleurs / si champ vide / ESC
+document.addEventListener("click", e=>{
+  if(!e.target.closest("#search") && !e.target.closest("#suggest")) suggest.style.display = "none";
+});
+document.addEventListener("keydown", e=>{
+  if(e.key === "Escape") suggest.style.display = "none";
+});
+
+// ===============================
+// RECHERCHE CLIENT (nom + téléphone)
+// ===============================
+// On charge une fois tous les clients, puis on filtre côté client
+let _clientsCache = null;  // [{nom, tel}, ...]
+async function _chargerClientsSiBesoin(){
+  if(_clientsCache) return _clientsCache;
+  const snap = await getDocs(collection(window.db, "clients"));
+  _clientsCache = [];
+  snap.forEach(d=>{
+    const c = d.data() || {};
+    if(c.nom && c.tel) _clientsCache.push({nom:String(c.nom), tel:String(c.tel)});
+  });
+  return _clientsCache;
+}
+
 async function rechercherClient(){
-  let input = search.value.trim().toUpperCase();
-  let telClean = search.value.replace(/\D/g,"");
+  const saisie = search.value.trim();
+  const inputNom = saisie.toUpperCase();       // recherche par NOM en majuscules
+  const inputTel = saisie.replace(/\D/g,"");   // recherche par NUMÉRO (uniquement chiffres)
 
   suggest.innerHTML = "";
-  if(input.length < 2 && telClean.length < 2){ suggest.style.display="none"; return; }
+  if(inputNom.length < 2 && inputTel.length < 2){ suggest.style.display="none"; return; }
 
-  let snap = await getDocs(collection(db, "clients"));
-  let results = [];
-
-  snap.forEach(doc=>{
-    let c = doc.data();
-    let nom = c.nom.toUpperCase();
-    let phone = c.tel.replace(/\D/g,"");
-
-    if(nom.includes(input) || phone.includes(telClean)){
-      results.push(c);
-    }
+  const data = await _chargerClientsSiBesoin();
+  const results = data.filter(c=>{
+    const nomU = c.nom.toUpperCase();
+    const telDigits = c.tel.replace(/\D/g,"");
+    return (inputNom.length>=2 && nomU.includes(inputNom)) ||
+           (inputTel.length>=2 && telDigits.includes(inputTel));
   });
 
   if(results.length === 0){
@@ -71,17 +80,50 @@ async function rechercherClient(){
       <button class="primary small-btn" style="width:100%;margin:6px 0;" onclick="ajouterNouveauClient()">➕ Ajouter ce client</button>`;
   } else {
     results.forEach(c=>{
-      suggest.innerHTML += `<div class="sug" onclick='remplirClient("${c.nom}","${c.tel}")'>${c.nom} — ${c.tel}</div>`;
+      // Sécurise l'injection (remplace guillemets)
+      const n = c.nom.replace(/"/g,"&quot;");
+      const t = c.tel.replace(/"/g,"&quot;");
+      suggest.innerHTML += `<div class="sug" onclick='remplirClient("${n}","${t}")'>${c.nom} — ${c.tel}</div>`;
     });
   }
-
   suggest.style.display = "block";
 }
 window.rechercherClient = rechercherClient;
 
-function remplirClient(n,t){ nom.value = n; tel.value = t; suggest.style.display = "none"; }
+function remplirClient(n,t){
+  nom.value = n;
+  tel.value = t;
+  suggest.style.display = "none";
+}
 
-// ✅ APPAREILS
+// ===============================
+// AJOUT CLIENT si non trouvé
+// ===============================
+async function ajouterNouveauClient(){
+  if(!search.value.trim()) return alert("Nom vide.");
+  if(!tel.value.trim()) return alert("Téléphone manquant.");
+
+  // Ajout côté Firestore
+  const { setDoc, doc, collection } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+  await setDoc(doc(collection(window.db,"clients")),{
+    nom: search.value.trim().toUpperCase(),
+    tel: tel.value.trim()
+  });
+
+  // Mets à jour le cache local pour que ce client apparaisse lors d'une prochaine recherche
+  if(_clientsCache){
+    _clientsCache.push({ nom: search.value.trim().toUpperCase(), tel: tel.value.trim() });
+  }
+
+  nom.value = search.value.toUpperCase();
+  suggest.style.display="none";
+  alert("✅ Client ajouté !");
+}
+window.ajouterNouveauClient = ajouterNouveauClient;
+
+// ===============================
+// Appareils (multi)
+// ===============================
 let appareils = [];
 function ajouterAppareil(){
   appareils.push({ type:type.value, marque:marque.value, modele:modele.value });
@@ -97,47 +139,54 @@ function afficherAppareils(){
 function supprimerAppareil(i){ appareils.splice(i,1); afficherAppareils(); }
 window.ajouterAppareil = ajouterAppareil;
 
-// ✅ SAUVEGARDE
-document.querySelectorAll('input[name="sauv"]').forEach(r=>{
-  r.onchange = ()=>{ optionsSauvegarde.style.display = (r.value==="Oui")?"block":"none"; };
+// ===============================
+// Sauvegarde (afficher détails si Oui)
+// ===============================
+document.addEventListener("DOMContentLoaded", ()=>{
+  document.querySelectorAll('input[name="sauv"]').forEach(r=>{
+    r.onchange = ()=>{ optionsSauvegarde.style.display = (r.value==="Oui")?"block":"none"; };
+  });
 });
 
-// ✅ CREATION FICHE
+// ===============================
+// Travaux (accordéon)
+// ===============================
+function toggleAccordion(el){ el.parentNode.classList.toggle("open"); }
+window.toggleAccordion = toggleAccordion;
+
+// ===============================
+// Création fiche (inchangé hors ajout complet des champs)
+// ===============================
 async function creer(){
   if(!nom.value.trim()) return alert("Nom manquant");
   if(!tel.value.trim()) return alert("Téléphone manquant");
   if(appareils.length === 0) return alert("Ajoute au moins un appareil");
 
-let sauvegardeChoix = document.querySelector('input[name="sauv"]:checked')?.value || "Non";
-let sauvItems = [...document.querySelectorAll('input[name="sauv-item"]:checked')].map(c => c.value);
-let travauxSelectionnes = [...document.querySelectorAll('.trav:checked')].map(c => c.value);
+  const { addDoc, collection } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
 
-await addDoc(collection(db,"fiches"),{
-  nom: nom.value,
-  tel: tel.value,
-  appareils: appareils,
-  probleme: prob.value,
-  sauvegarde: sauvegardeChoix,
-  sauvegardeItems: sauvItems,
-  travaux: travauxSelectionnes,
-  motdepasse: mdp.value.trim() || "",
-  date: new Date().toISOString()
-});
+  const sauvegardeChoix = document.querySelector('input[name="sauv"]:checked')?.value || "Non";
+  const sauvItems = [...document.querySelectorAll('input[name="sauv-item"]:checked')].map(c => c.value);
+  const travauxSelectionnes = [...document.querySelectorAll('.trav:checked')].map(c => c.value);
 
-location.href="historique.html";
+  await addDoc(collection(window.db,"fiches"),{
+    nom: nom.value,
+    tel: tel.value,
+    appareils: appareils,
+    probleme: prob.value,
+    sauvegarde: sauvegardeChoix,
+    sauvegardeItems: sauvItems,
+    travaux: travauxSelectionnes,
+    motdepasse: mdp.value.trim() || "",
+    date: new Date().toISOString()
+  });
+
+  location.href="historique.html";
 }
 window.creer = creer;
 
-// ✅ FERMETURE LISTE
-document.addEventListener("click", e=>{ if(!e.target.closest("#search") && !e.target.closest("#suggest")) suggest.style.display="none"; });
-
-// ✅ ACCORDÉON
-function toggleAccordion(el){ el.parentNode.classList.toggle("open"); }
-window.toggleAccordion = toggleAccordion;
-</script>
-
-<script>
-// ✅ MARQUES PAR TYPE
+// ===============================
+// Marques par type (inchangé)
+// ===============================
 const marquesParType = {
   "Ordinateur Portable": ["Acer","Asus","HP","Lenovo","Dell","MSI","Apple","Samsung","Toshiba","Autre"],
   "Ordinateur Fixe": ["Assembler","Acer","Asus","HP","Dell","Lenovo","Autre"],
@@ -149,87 +198,105 @@ const marquesParType = {
 };
 function majMarques(){
   marque.innerHTML = "";
-  marquesParType[type.value].forEach(m=> marque.innerHTML += `<option>${m}</option>`);
+  (marquesParType[type.value]||["Autre"]).forEach(m=> marque.innerHTML += `<option>${m}</option>`);
 }
-majMarques();
+document.addEventListener("DOMContentLoaded", majMarques);
 </script>
 
+<!-- petit style local pour le bloc carte -->
+<style>.card-block{background:#f6f9fc;padding:12px;border-radius:8px;margin-top:12px;border:1px solid #d8e0e8;}</style>
 </head>
 <body>
 
 <div class="container">
-<h1>🖥️ Fiche de Dépôt - sosordi03</h1>
+  <h1>🖥️ Fiche de Dépôt - sosordi03</h1>
 
-<input type="text" id="search" class="input" placeholder="🔍 Rechercher un client..." oninput="rechercherClient()">
+  <!-- Recherche client -->
+  <input type="text" id="search" class="input" placeholder="🔍 Rechercher un client..." oninput="rechercherClient()">
+  <div id="suggest" class="suggest-box"></div>
 
-<!-- ✅ FIX LISTE CLIENTS -->
-<div id="suggest" class="suggest-box" style="z-index:9999; position:absolute; top:92px;"></div>
+  <div class="card">
 
-<div class="card">
+    <label>Nom du client :</label>
+    <input id="nom" class="input" oninput="this.value=this.value.toUpperCase()">
 
-<label>Nom du client :</label>
-<input id="nom" class="input">
+    <label>Téléphone :</label>
+    <input id="tel" class="input" maxlength="14" oninput="formatTel();">
 
-<label>Téléphone :</label>
-<input id="tel" class="input" maxlength="14" oninput="formatTel();">
+    <label>Mot de passe (optionnel) :</label>
+    <input id="mdp" class="input">
 
-<label>Mot de passe (optionnel) :</label>
-<input id="mdp" class="input">
-
-<div class="card-block">
-<label>Ajouter un appareil :</label>
-<div class="grid-3">
-  <div><label>Type :</label><select id="type" class="input" onchange="majMarques()">
-    <option>Ordinateur Portable</option><option>Ordinateur Fixe</option><option>Tablette</option>
-    <option>Disque dur externe</option><option>Écran</option><option>Imprimante</option><option>Autre</option>
-  </select></div>
-  <div><label>Marque :</label><select id="marque" class="input"></select></div>
-  <div><label>Modèle :</label><input id="modele" class="input"></div>
-</div>
-<button class="secondary small-btn" onclick="ajouterAppareil()">➕ Ajouter cet appareil</button>
-<div id="listeAppareils"></div>
-</div>
-
-<div class="card-block">
-<label>Sauvegarde :</label><br>
-<input type="radio" name="sauv" value="Non" checked> Non
-<input type="radio" name="sauv" value="Oui"> Oui
-
-<div id="optionsSauvegarde" style="display:none;margin-top:6px;">
-  <label><input type="checkbox" name="sauv-item" value="Documents"> Documents</label><br>
-  <label><input type="checkbox" name="sauv-item" value="Images"> Images</label><br>
-  <label><input type="checkbox" name="sauv-item" value="Vidéos"> Vidéos</label><br>
-  <label><input type="checkbox" name="sauv-item" value="Favoris"> Favoris</label><br>
-  <label><input type="checkbox" name="sauv-item" value="Mots de passe"> Mots de passe</label><br>
-</div>
-</div>
-
-<div class="accordion">
-  <div class="accordion-header" onclick="toggleAccordion(this)">
-    Travaux à réaliser :
-    <span class="arrow">▼</span>
-  </div>
-  <div class="accordion-content">
-    <div class="checkbox-group">
-      <label><input type="checkbox" class="trav" value="Migration Windows 11"> Migration Windows 11</label>
-      <label><input type="checkbox" class="trav" value="Réinstallation complète Windows"> Réinstallation complète Windows</label>
-      <label><input type="checkbox" class="trav" value="Nettoyage système + Optimisation"> Nettoyage système + Optimisation</label>
-      <label><input type="checkbox" class="trav" value="Suppression virus / malwares"> Suppression virus / malwares</label>
-      <label><input type="checkbox" class="trav" value="Installation SSD + clonage"> Installation SSD + clonage</label>
-      <label><input type="checkbox" class="trav" value="Sauvegarde + Restauration"> Sauvegarde + Restauration</label>
-      <label><input type="checkbox" class="trav" value="Ajout / Changement RAM"> Ajout / Changement RAM</label>
-      <label><input type="checkbox" class="trav" value="Autre"> Autre…</label>
+    <!-- Appareils -->
+    <div class="card-block">
+      <label>Ajouter un appareil :</label>
+      <div class="grid-3">
+        <div>
+          <label>Type :</label>
+          <select id="type" class="input" onchange="majMarques()">
+            <option>Ordinateur Portable</option>
+            <option>Ordinateur Fixe</option>
+            <option>Tablette</option>
+            <option>Disque dur externe</option>
+            <option>Écran</option>
+            <option>Imprimante</option>
+            <option>Autre</option>
+          </select>
+        </div>
+        <div>
+          <label>Marque :</label>
+          <select id="marque" class="input"></select>
+        </div>
+        <div>
+          <label>Modèle :</label>
+          <input id="modele" class="input">
+        </div>
+      </div>
+      <button class="secondary small-btn" onclick="ajouterAppareil()">➕ Ajouter cet appareil</button>
+      <div id="listeAppareils"></div>
     </div>
+
+    <!-- Sauvegarde -->
+    <div class="card-block">
+      <label>Sauvegarde :</label><br>
+      <input type="radio" name="sauv" value="Non" checked> Non
+      <input type="radio" name="sauv" value="Oui"> Oui
+
+      <div id="optionsSauvegarde" style="display:none;margin-top:6px;">
+        <label><input type="checkbox" name="sauv-item" value="Documents"> Documents</label><br>
+        <label><input type="checkbox" name="sauv-item" value="Images"> Images</label><br>
+        <label><input type="checkbox" name="sauv-item" value="Vidéos"> Vidéos</label><br>
+        <label><input type="checkbox" name="sauv-item" value="Favoris"> Favoris</label><br>
+        <label><input type="checkbox" name="sauv-item" value="Mots de passe"> Mots de passe</label><br>
+      </div>
+    </div>
+
+    <!-- Travaux -->
+    <div class="accordion">
+      <div class="accordion-header" onclick="toggleAccordion(this)">
+        Travaux à réaliser :
+        <span class="arrow">▼</span>
+      </div>
+      <div class="accordion-content">
+        <div class="checkbox-group">
+          <label><input type="checkbox" class="trav" value="Migration Windows 11"> Migration Windows 11</label>
+          <label><input type="checkbox" class="trav" value="Réinstallation complète Windows"> Réinstallation complète Windows</label>
+          <label><input type="checkbox" class="trav" value="Nettoyage système + Optimisation"> Nettoyage système + Optimisation</label>
+          <label><input type="checkbox" class="trav" value="Suppression virus / malwares"> Suppression virus / malwares</label>
+          <label><input type="checkbox" class="trav" value="Installation SSD + clonage"> Installation SSD + clonage</label>
+          <label><input type="checkbox" class="trav" value="Sauvegarde + Restauration"> Sauvegarde + Restauration</label>
+          <label><input type="checkbox" class="trav" value="Ajout / Changement RAM"> Ajout / Changement RAM</label>
+          <label><input type="checkbox" class="trav" value="Autre"> Autre…</label>
+        </div>
+      </div>
+    </div>
+
+    <label>Description du problème :</label>
+    <textarea id="prob" class="textarea" rows="4"></textarea>
+
+    <button class="primary" onclick="creer()">Créer la fiche</button>
   </div>
-</div>
 
-<label>Description du problème :</label>
-<textarea id="prob" class="textarea" rows="4"></textarea>
-
-<button class="primary" onclick="creer()">Créer la fiche</button>
-</div>
-
-<div class="center"><a href="historique.html" class="link">📚 Voir l'historique</a></div>
+  <div class="center"><a href="historique.html" class="link">📚 Voir l'historique</a></div>
 </div>
 
 </body>
