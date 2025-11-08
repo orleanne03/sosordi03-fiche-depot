@@ -144,16 +144,16 @@ const marquesParType = {
   "Autre": ["Autre"]
 };
 
-// ---- SERIES + MODELES PAR MARQUE ----
+// ---- SERIES + MODELES (Firestore) ----
 let seriesParMarque = {};
-let modelesParMarque = {};
+let modelesParSerie = {};
 
 async function chargerAutoData(){
   let snapSeries = await getDocs(collection(db,"series"));
   snapSeries.forEach(d=> seriesParMarque[d.id] = d.data().liste || []);
 
-  let snapModeles = await getDocs(collection(db,"modeles_marque"));
-  snapModeles.forEach(d=> modelesParMarque[d.id] = d.data().liste || []);
+  let snapModeles = await getDocs(collection(db,"modeles"));
+  snapModeles.forEach(d=> modelesParSerie[d.id] = d.data().liste || []);
 }
 await chargerAutoData();
 
@@ -166,25 +166,28 @@ window.majMarques = majMarques;
 
 function majSeries(){
   let liste = seriesParMarque[marque.value] || [];
-  document.getElementById("serie-block").style.display = (liste.length === 0) ? "none" : "block";
-  if(liste.length){
-    listeSeries.innerHTML = liste.map(s => `<option value="${s}">`).join("");
+
+  if(liste.length === 0){
+    document.getElementById("serie-block").style.display="none";
+  } else {
+    document.getElementById("serie-block").style.display="block";
+    serie.innerHTML = "";
+    liste.forEach(s=> serie.innerHTML += `<option>${s}</option>`);
   }
+
   majModeles();
 }
 window.majSeries = majSeries;
 
 function majModeles(){
-  let liste = modelesParMarque[marque.value] || [];
-  // Option 2 → modèles les + utilisés en premier
-  liste = [...liste].sort((a,b)=> 
-    (liste.filter(m=>m===b).length - liste.filter(m=>m===a).length)
-  );
-  listeModeles.innerHTML = liste.map(m => `<option value="${m}">`).join("");
+  // ✅ LIGNE MODIFIÉE ICI (et uniquement ici)
+  let key = (marque.value || "") + "__" + (serie.value || "");
+  let liste = modelesParSerie[key] || [];
+  document.getElementById("listeModeles").innerHTML = liste.map(m => `<option value="${m}">`).join("");
 }
 window.majModeles = majModeles;
 
-// ✅ APPRENTISSAGE (marque uniquement)
+// ✅ APPRENTISSAGE
 async function enregistrer(){
   let s = serie.value.trim();
   let m = modele.value.trim();
@@ -198,10 +201,11 @@ async function enregistrer(){
     }
   }
 
-  if(!modelesParMarque[mk]) modelesParMarque[mk] = [];
-  if(m && !modelesParMarque[mk].includes(m)){
-    modelesParMarque[mk].push(m);
-    await setDoc(doc(db,"modeles_marque",mk), { liste:modelesParMarque[mk] });
+  let key = mk+"__"+(s || "");
+  if(!modelesParSerie[key]) modelesParSerie[key] = [];
+  if(m && !modelesParSerie[key].includes(m)){
+    modelesParSerie[key].push(m);
+    await setDoc(doc(db,"modeles",key), { liste:modelesParSerie[key] });
   }
 }
 
@@ -280,7 +284,6 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.dis
 <div class="card-block">
 <label>Ajouter un appareil :</label>
 <div class="grid-3">
-
   <div><label>Type :</label><select id="type" class="input" onchange="majMarques()">
     <option value="" selected disabled>-- Choisir un type --</option>
     <option>Ordinateur Portable</option><option>Ordinateur Fixe</option><option>Tablette</option>
@@ -299,7 +302,6 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.dis
   <input id="modele" class="input" list="listeModeles" placeholder="Saisir ou choisir">
   <datalist id="listeModeles"></datalist>
   </div>
-
 </div>
 
 <button class="secondary small-btn" onclick="ajouterAppareil()">➕ Ajouter cet appareil</button>
