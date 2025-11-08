@@ -588,3 +588,26 @@ input[type="radio"], input[type="checkbox"] {
 
 🔐 Mot de passe (optionnel) :
 [ Champ ]
+/* Icônes devant les titres */
+label:has(+ #nom)::before {
+  content: "🧑‍💻 ";
+}
+label:has(+ #tel)::before {
+  content: "📞 ";
+}
+label:has(+ #couleur)::before {
+  content: "🎨 ";
+}
+label:has(+ #mdp)::before {
+  content: "🔐 ";
+}
+
+/* Style propre des titres */
+.container label {
+  font-weight: 700;
+  font-size: 19px;
+  color: #0d3157;
+  display: block;
+  margin-top: 22px;
+  margin-bottom: 8px;
+}
