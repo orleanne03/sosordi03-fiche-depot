@@ -490,3 +490,43 @@ body.history-page{
 .delete-btn {
   margin-left: auto !important;
 }
+/* Désactive le centrage qui cassait l'alignement */
+.fiche-card {
+  text-align: initial !important;
+}
+
+/* Ligne du nom + couleur + poubelle */
+.fiche-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100%;
+  padding: 10px 14px;
+}
+
+/* Groupe pastille + nom */
+.fiche-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Pastille couleur */
+.color-tag {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+}
+
+/* Nom du client */
+.fiche-name {
+  font-weight: 700;
+  font-size: 1.4rem;
+  margin: 0;
+  padding: 0;
+}
+
+/* Poubelle */
+.delete-btn {
+  margin-left: auto !important;
+}
