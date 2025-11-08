@@ -611,6 +611,6 @@ label:has(+ #mdp)::before {
   margin-top: 22px;
   margin-bottom: 8px;
 }
-label:has(#nom)::before {
+label[for="nom"]::before {
   content: "🧑‍💻 ";
 }
