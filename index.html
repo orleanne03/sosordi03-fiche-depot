@@ -243,9 +243,15 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.dis
 <label>Ajouter un appareil :</label>
 <div class="grid-3">
   <div><label>Type :</label><select id="type" class="input" onchange="majMarques()">
-    <option>Ordinateur Portable</option><option>Ordinateur Fixe</option><option>Tablette</option>
-    <option>Disque dur externe</option><option>Écran</option><option>Imprimante</option><option>Autre</option>
-  </select></div>
+  <option value="" selected disabled>-- Choisir un type --</option>
+  <option>Ordinateur Portable</option>
+  <option>Ordinateur Fixe</option>
+  <option>Tablette</option>
+  <option>Disque dur externe</option>
+  <option>Écran</option>
+  <option>Imprimante</option>
+  <option>Autre</option>
+</select></div>
 
   <div><label>Marque :</label><select id="marque" class="input" onchange="majModeles()"></select></div>
 
