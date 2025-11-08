@@ -45,7 +45,10 @@ async function load(){
     zone.innerHTML += `
 <div class="fiche-card">
   <button class="delete-btn" onclick="supprimer('${d.id}')">🗑</button>
-  <div class="fiche-name">${f.nom}</div>
+  <div class="fiche-name">
+  <span class="color-tag" style="background:${f.couleur || 'transparent'}"></span>
+  ${f.nom}
+</div>
   <div class="fiche-date">📅 ${new Date(f.date).toLocaleDateString()}</div>
 
   <p>📞 ${formatTelAffichage(f.tel)}</p>
