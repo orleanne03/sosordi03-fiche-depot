@@ -254,6 +254,41 @@ body.history-page{
 .accordion-card.open .fiche-content {
   display:block;
 }
+
+/* --- Sélecteur Sauvegarde - Gris Pro --- */
+.switch-group {
+  display: inline-flex;
+  gap: 8px;
+  background: #f1f3f7;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid #cbd4e1;
+}
+
+.switch-option {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-weight: 600;
+  color: #2b3f55;
+  transition: .25s ease;
+}
+
+.switch-option input {
+  display: none;
+}
+
+/* Quand sélectionné → gris foncé élégant */
+.switch-option input:checked + span {
+  color: white;
+  background: #5f6e7b;
+  border-radius: 8px;
+  padding: 6px 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.12);
+}
+
 /* =========================================================
    🎨 STYLE PRO GRIS UNIFIÉ
    ========================================================= */
