@@ -118,67 +118,94 @@ window.remplirClient = remplirClient;
 
 let appareils = [];
 function ajouterAppareil(){
-  appareils.push({ type:type.value, marque:marque.value, modele:modele.value });
+  appareils.push({ type:type.value, marque:marque.value, serie:serie.value || "", modele:modele.value });
   afficherAppareils(); 
   modele.value="";
+  serie.value="";
 }
 function afficherAppareils(){
   listeAppareils.innerHTML = appareils.map((a,i)=>`
   <div style="padding:6px;border-bottom:1px solid #ccc;">
-    ${a.type} — ${a.marque} ${a.modele}
+    ${a.type} — ${a.marque} ${a.serie ? a.serie+" " : ""}${a.modele}
     <button class="danger small-btn" onclick="supprimerAppareil(${i})">🗑</button>
   </div>`).join("");
 }
 function supprimerAppareil(i){ appareils.splice(i,1); afficherAppareils(); }
 window.ajouterAppareil = ajouterAppareil;
 
-// ---- MARQUES PAR TYPE ----
+// ---- MARQUES ----
 const marquesParType = {
-  "Ordinateur Portable": ["Acer","Asus","HP","Lenovo","Dell","MSI","Apple","Samsung","Toshiba","Autre"],
-  "Ordinateur Fixe": ["Assembler","Acer","Asus","HP","Dell","Lenovo","Autre"],
-  "Tablette": ["Apple","Samsung","Lenovo","Huawei","Microsoft Surface","Autre"],
+  "Ordinateur Portable": ["Acer","Asus","HP","Lenovo","Dell","MSI","Samsung","Toshiba","Fujitsu","LG","Autre"],
+  "Ordinateur Fixe": ["Assembler","Acer","Asus","HP","Dell","Lenovo","MSI","Autre"],
+  "Tablette": ["Samsung","Lenovo","Huawei","Microsoft Surface","Autre"],
   "Disque dur externe": ["Seagate","Western Digital","Toshiba","Samsung","LaCie","Autre"],
   "Écran": ["Samsung","LG","AOC","Iiyama","Philips","Dell","Asus","Autre"],
   "Imprimante": ["HP","Canon","Epson","Brother","Lexmark","Samsung","Autre"],
   "Autre": ["Autre"]
 };
 
-// ---- ✅ MODELES PAR MARQUE AVEC FIRESTORE ----
-let modelesParMarque = {};
+// ---- SERIES + MODELES (Firestore) ----
+let seriesParMarque = {};
+let modelesParSerie = {};
 
-async function chargerModeles(){
-  modelesParMarque = {};
-  let snap = await getDocs(collection(db,"modeles"));
-  snap.forEach(d=> modelesParMarque[d.id] = d.data().liste );
+async function chargerAutoData(){
+  let snapSeries = await getDocs(collection(db,"series"));
+  snapSeries.forEach(d=> seriesParMarque[d.id] = d.data().liste || []);
+
+  let snapModeles = await getDocs(collection(db,"modeles"));
+  snapModeles.forEach(d=> modelesParSerie[d.id] = d.data().liste || []);
 }
-await chargerModeles();
-
-// Si aucune donnée → liste de base
-for(let m in modelesParMarque) if(!modelesParMarque[m]) modelesParMarque[m]=[];
+await chargerAutoData();
 
 function majMarques(){
   marque.innerHTML = "";
   marquesParType[type.value].forEach(m=> marque.innerHTML += `<option>${m}</option>`);
-  majModeles();
-}
-
-function majModeles(){
-  let liste = modelesParMarque[marque.value] || [];
-  document.getElementById("listeModeles").innerHTML = liste.map(m => `<option value="${m}">`).join("");
+  majSeries();
 }
 window.majMarques = majMarques;
-window.majModeles = majModeles;
-majMarques();
 
-// ✅ AJOUT PERMANENT DE NOUVEAUX MODELES
-async function enregistrerNouveauModele(){
+function majSeries(){
+  let liste = seriesParMarque[marque.value] || [];
+
+  // B1 → série s’affiche seulement si connue
+  if(liste.length === 0){
+    document.getElementById("serie-block").style.display="none";
+  } else {
+    document.getElementById("serie-block").style.display="block";
+    serie.innerHTML = "";
+    liste.forEach(s=> serie.innerHTML += `<option>${s}</option>`);
+  }
+
+  majModeles();
+}
+window.majSeries = majSeries;
+
+function majModeles(){
+  let key = (marque.value || "") + " / " + (serie.value || "");
+  let liste = modelesParSerie[key] || [];
+  document.getElementById("listeModeles").innerHTML = liste.map(m => `<option value="${m}">`).join("");
+}
+window.majModeles = majModeles;
+
+// ✅ APPRENTISSAGE
+async function enregistrer(){
+  let s = serie.value.trim();
   let m = modele.value.trim();
-  let marqueChoisie = marque.value;
-  if(!m) return;
-  if(!modelesParMarque[marqueChoisie]) modelesParMarque[marqueChoisie] = [];
-  if(!modelesParMarque[marqueChoisie].includes(m)){
-    modelesParMarque[marqueChoisie].push(m);
-    await setDoc(doc(db,"modeles",marqueChoisie), { liste:modelesParMarque[marqueChoisie] });
+  let mk = marque.value;
+
+  if(s){
+    if(!seriesParMarque[mk]) seriesParMarque[mk] = [];
+    if(!seriesParMarque[mk].includes(s)){
+      seriesParMarque[mk].push(s);
+      await setDoc(doc(db,"series",mk), { liste:seriesParMarque[mk] });
+    }
+  }
+
+  let key = mk+" / "+(s || "");
+  if(!modelesParSerie[key]) modelesParSerie[key] = [];
+  if(m && !modelesParSerie[key].includes(m)){
+    modelesParSerie[key].push(m);
+    await setDoc(doc(db,"modeles",key), { liste:modelesParSerie[key] });
   }
 }
 
@@ -195,7 +222,7 @@ async function creer(){
   if(!tel.value.trim()) return alert("Téléphone manquant");
   if(appareils.length === 0) return alert("Ajoute au moins un appareil");
 
-await enregistrerNouveauModele();
+await enregistrer();
 
 let sauvegardeChoix = document.querySelector('input[name="sauv"]:checked')?.value || "Non";
 let sauvItems = [...document.querySelectorAll('input[name="sauv-item"]:checked')].map(c => c.value);
@@ -221,9 +248,10 @@ window.creer = creer;
 document.addEventListener("click", e=>{ if(!e.target.closest("#search") && !e.target.closest("#suggest")) suggest.style.display="none"; });
 search.addEventListener("input", ()=>{ if(search.value.trim().length < 2) suggest.style.display="none"; });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.display="none"; });
-</script>
-</head>
 
+</script>
+
+</head>
 <body>
 
 <div class="container">
@@ -262,9 +290,15 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.dis
     <option>Disque dur externe</option><option>Écran</option><option>Imprimante</option><option>Autre</option>
   </select></div>
 
-  <div><label>Marque :</label><select id="marque" class="input" onchange="majModeles()"></select></div>
+  <div><label>Marque :</label><select id="marque" class="input" onchange="majSeries()"></select></div>
 
-  <!-- ✅ CHAMP MODÈLE AVEC LISTE + SAISIE LIBRE -->
+  <!-- B1 → Série affichée seulement si elle existe -->
+  <div id="serie-block" style="display:none;">
+    <label>Série :</label>
+    <input id="serie" class="input" list="listeSeries" placeholder="Saisir ou choisir">
+    <datalist id="listeSeries"></datalist>
+  </div>
+
   <div><label>Modèle :</label>
   <input id="modele" class="input" list="listeModeles" placeholder="Saisir ou choisir">
   <datalist id="listeModeles"></datalist>
