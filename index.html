@@ -31,7 +31,7 @@ async function ajouterNouveauClient(){
 
   await setDoc(doc(collection(db,"clients")),{
     nom: search.value.trim().toUpperCase(),
-    tel: tel.value.trim()
+    tel: tel.value.trim() // on garde ton format actuel
   });
 
   nom.value = search.value.toUpperCase();
@@ -41,31 +41,48 @@ async function ajouterNouveauClient(){
 window.ajouterNouveauClient = ajouterNouveauClient;
 
 // ----------------------------------------------------------
-// FORMAT TÉLÉPHONE
+// FORMAT TÉLÉPHONE (affichage uniquement)
 function formatTel(){
   let v = tel.value.replace(/\D/g,"").slice(0,10);
   tel.value = v.replace(/(..)(?=.)/g,"$1-");
 }
 
 // ----------------------------------------------------------
-// RECHERCHE CLIENT (Nom OU Téléphone)
+// RECHERCHE CLIENT (Nom OU Téléphone normalisé)
 async function rechercherClient(){
   let val = search.value.trim().toUpperCase();
   suggest.innerHTML = "";
   if(val.length < 2){ suggest.style.display="none"; return; }
 
-  let snap;
-  let raw = search.value.trim(); // téléphone en format exact tapé
+  // Si on tape un numéro → normalisation
+  if(/^[0-9\s\-]+$/.test(val)){
+    let telSearch = val.replace(/\D/g,""); // on compare **uniquement les chiffres**
 
-  // Si saisie est un numéro → recherche sur téléphone EXACT
-  if(/^[0-9 \-]+$/.test(raw)){
-    let q = query(collection(db,"clients"), where("tel","==", raw));
-    snap = await getDocs(q);
-  } else {
-    // Sinon recherche par nom (inchangé)
-    let q = query(collection(db, "clients"), orderBy("nom"), startAt(val), endAt(val + "\uf8ff"));
-    snap = await getDocs(q);
+    let all = await getDocs(collection(db,"clients"));
+    let results = [];
+
+    all.forEach(doc=>{
+      let c = doc.data();
+      let stored = c.tel.replace(/\D/g,""); // on normalise aussi le numéro stocké
+      if(stored.includes(telSearch)) results.push(c);
+    });
+
+    if(results.length === 0){
+      suggest.innerHTML = `<div class="sug" style="color:#b00;">Aucun résultat</div>
+      <button class="primary small-btn" style="width:100%;margin:6px 0;" onclick="ajouterNouveauClient()">➕ Ajouter ce client</button>`;
+    } else {
+      results.forEach(c=>{
+        suggest.innerHTML += `<div class="sug" onclick='remplirClient("${c.nom}","${c.tel}")'>${c.nom} — ${c.tel}</div>`;
+      });
+    }
+
+    suggest.style.display = "block";
+    return;
   }
+
+  // Sinon → recherche par nom (inchangée)
+  let q = query(collection(db, "clients"), orderBy("nom"), startAt(val), endAt(val + "\uf8ff"));
+  let snap = await getDocs(q);
 
   if(snap.empty){
     suggest.innerHTML = `<div class="sug" style="color:#b00;">Aucun résultat</div>
