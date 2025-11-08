@@ -318,3 +318,27 @@ body.history-page{
 .accordion-card .fiche-content.open {
   display:block;
 }
+/* En-tête de la fiche : couleur + nom à gauche / corbeille à droite */
+.fiche-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Groupe couleur + nom */
+.fiche-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* espace léger entre point et nom */
+}
+
+/* Nom */
+.fiche-header-left .fiche-name {
+  font-weight: 700;
+  font-size: 1.3rem;
+}
+
+/* Bouton corbeille */
+.fiche-header .delete-btn {
+  flex-shrink: 0;
+}
