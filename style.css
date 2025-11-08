@@ -372,3 +372,38 @@ body.history-page{
   border-radius: 50%;
   display: inline-block;
 }
+/* --- Alignement de l’en-tête de fiche --- */
+.fiche-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+}
+
+/* Pastille + Nom collés à gauche */
+.fiche-header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Pastille */
+.color-tag {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Nom bien aligné et pas décalé */
+.fiche-name {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #1d3557;
+}
+
+/* Icône corbeille bien à droite */
+.delete-btn {
+  margin-left: auto;
+}
