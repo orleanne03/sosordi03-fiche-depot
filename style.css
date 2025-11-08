@@ -407,3 +407,45 @@ body.history-page{
 .delete-btn {
   margin-left: auto;
 }
+/* Force l'en-tête à ne plus être centré */
+.fiche-header,
+.fiche-header-left,
+.fiche-name {
+  text-align: left !important;
+}
+
+/* On reconstruit l'en-tête proprement */
+.fiche-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100%;
+  padding: 12px 18px;
+}
+
+/* Pastille + nom groupés */
+.fiche-header-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+/* Pastille */
+.color-tag {
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  display: inline-block !important;
+}
+
+/* Nom du client */
+.fiche-name {
+  font-size: 1.4rem !important;
+  font-weight: 700 !important;
+  color: #1d3557 !important;
+}
+
+/* Corbeille alignée à droite */
+.delete-btn {
+  margin-left: auto !important;
+}
