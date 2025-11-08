@@ -48,7 +48,7 @@ function formatTel(){
 }
 
 // ----------------------------------------------------------
-// ✅ RECHERCHE CLIENT (Nom OU Téléphone Normalisé)
+// ✅ RECHERCHE CLIENT (Nom OU Téléphone normalisé)
 async function rechercherClient(){
   let input = search.value.trim();
   let searchUpper = input.toUpperCase();
@@ -58,7 +58,7 @@ async function rechercherClient(){
   let all = await getDocs(collection(db,"clients"));
   let results = [];
 
-  // --- Recherche Téléphone ---
+  // --- Téléphone ---
   let telSearch = input.replace(/\D/g,"");
   if(telSearch.length >= 2){
     all.forEach(doc=>{
@@ -68,13 +68,13 @@ async function rechercherClient(){
     });
   }
 
-  // --- Recherche Nom (inchangée) ---
+  // --- Nom ---
   all.forEach(doc=>{
     let c = doc.data();
     if(c.nom && c.nom.toUpperCase().includes(searchUpper)) results.push(c);
   });
 
-  // --- Suppression doublons ---
+  // --- Supprimer doublons ---
   let uniques = [];
   let seen = new Set();
   results.forEach(c=>{
@@ -91,7 +91,7 @@ async function rechercherClient(){
     <button class="primary small-btn" style="width:100%;margin:6px 0;" onclick="ajouterNouveauClient()">➕ Ajouter ce client</button>`;
   } else {
     uniques.forEach(c=>{
-      suggest.innerHTML += `<div class="sug" onclick='remplirClient("${c.nom}","${c.tel}")'>${c.nom} — ${c.tel}</div>`;
+      suggest.innerHTML += `<div class="sug" onclick='remplirClient(${JSON.stringify(c.nom)}, ${JSON.stringify(c.tel)})'>${c.nom} — ${c.tel}</div>`;
     });
   }
 
@@ -99,7 +99,14 @@ async function rechercherClient(){
 }
 window.rechercherClient = rechercherClient;
 
-function remplirClient(n,t){ nom.value = n; tel.value = t; suggest.style.display = "none"; }
+// ----------------------------------------------------------
+// ✅ Correction du clic
+function remplirClient(n,t){
+  nom.value = n;
+  tel.value = t;
+  suggest.style.display = "none";
+}
+window.remplirClient = remplirClient;
 
 // ----------------------------------------------------------
 // APPAREILS
