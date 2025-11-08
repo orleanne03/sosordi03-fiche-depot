@@ -22,6 +22,7 @@ body{
   padding:40px 15px;
   display:flex;
   flex-direction:column;
+  position:relative; /* ✅ FIX : permet à la liste des clients de s'afficher */
 }
 
 h1{text-align:center;margin-bottom:25px;color:#143658;font-weight:600;}
@@ -80,7 +81,6 @@ h1{text-align:center;margin-bottom:25px;color:#143658;font-weight:600;}
 }
 .secondary:hover{background:#455767;}
 
-/* ✅ MODIF TACTILE : petits boutons ajustés */
 .small-btn{
   margin-top:6px;
   padding:10px 14px;
@@ -92,7 +92,6 @@ h1{text-align:center;margin-bottom:25px;color:#143658;font-weight:600;}
 .link{text-decoration:none;font-weight:600;color:#0078d7;}
 .link:hover{text-decoration:underline;}
 
-/* ✅ SUGGESTION CLIENT — ICI LA CORRECTION */
 .suggest-box{
   position:absolute;
   background:white;
@@ -101,9 +100,9 @@ h1{text-align:center;margin-bottom:25px;color:#143658;font-weight:600;}
   border-radius:8px;
   border:1px solid #d1dae6;
   display:none;
-  box-shadow:0 6px 12px rgba(0,0,0,.12);
-  margin-top:2px;
-  z-index:9999; /* ✅ Correction pour réafficher la liste */
+  box-shadow:0 6px 12px rgba(0,0,0,.08);
+  margin-top:-5px;
+  z-index:9999; /* ✅ Pour passer au dessus */
 }
 .sug{padding:12px;cursor:pointer;}
 .sug:hover{background:#e6f1ff;}
@@ -147,24 +146,8 @@ h1{text-align:center;margin-bottom:25px;color:#143658;font-weight:600;}
   animation:pop .25s ease;
   line-height:1.6;
 }
-.section-title {
-  font-weight: bold;
-  margin-top: 8px;
-  color: #0d3a66;
-  font-size: 15px;
-}
 
-.section-block {
-  background: #fff;
-  padding: 8px 10px;
-  border-radius: 6px;
-  margin-bottom: 8px;
-  border: 1px solid #d9e3ef;
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-/* ACCORDÉON TRAVAUX */
+/* ACCORDÉON */
 .accordion {
   background:#f4f7fb;
   border:1px solid #d5dcea;
@@ -172,7 +155,6 @@ h1{text-align:center;margin-bottom:25px;color:#143658;font-weight:600;}
   margin-top:14px;
   overflow:hidden;
 }
-
 .accordion-header {
   padding:14px;
   font-weight:600;
@@ -182,66 +164,18 @@ h1{text-align:center;margin-bottom:25px;color:#143658;font-weight:600;}
   align-items:center;
   color:#0d3157;
 }
-
 .accordion-header:hover { background:#e8eef7; }
-
 .accordion-content {
   max-height:0;
   overflow:hidden;
   transition:max-height .35s ease;
   padding:0 14px;
 }
-
 .accordion.open .accordion-content {
   max-height:400px;
   padding:14px;
 }
+.accordion .arrow {transition: transform .35s;}
+.accordion.open .arrow {transform: rotate(-180deg);}
 
-.accordion .arrow {
-  transition: transform .35s;
-}
-.accordion.open .arrow {
-  transform: rotate(-180deg);
-}
-
-/* CARTES HISTORIQUE (inchangé) */
-.history-container{
-  width:100%;
-  max-width:650px;
-  display:flex;
-  flex-direction:column;
-  gap:18px;
-  margin-bottom:30px;
-}
-
-.fiche-card{
-  width:100%;
-  background:#fff;
-  padding:18px;
-  border-radius:14px;
-  border:1px solid #d9dfe8;
-  box-shadow:0 4px 10px rgba(0,0,0,.08);
-  transition:.2s;
-}
-
-.fiche-card:hover{
-  transform:translateY(-3px);
-  box-shadow:0 8px 18px rgba(0,0,0,.12);
-}
-
-.return-link{
-  font-size:18px;
-}
-.delete-btn{
-  float:right;
-  border:none;
-  background:none;
-  font-size:20px;
-  cursor:pointer;
-  opacity:0.6;
-  transition:0.2s;
-}
-.delete-btn:hover{ opacity:1; }
-
-.modal-buttons{display:flex;justify-content:space-between;margin-top:18px;}
 @keyframes pop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
