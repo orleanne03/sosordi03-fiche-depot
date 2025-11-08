@@ -840,3 +840,10 @@ label[for="nom"]::before {
   margin-top: 8px !important;
   padding: 6px 0 !important;
 }
+/* Pastille couleur plus visible */
+.history-page .color-tag {
+  width: 18px !important;
+  height: 18px !important;
+  border-radius: 50% !important;
+  margin-right: 10px !important;
+}
