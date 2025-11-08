@@ -829,3 +829,14 @@ label[for="nom"]::before {
 .history-page .fiche-content .fiche-date {
   padding: 4px 0 !important;
 }
+/* --- Réduction de la hauteur globale du bloc dans l'historique --- */
+.history-page .fiche-card {
+  padding: 10px 14px !important; /* ↓ au lieu de ~22px */
+  border-radius: 12px !important;
+}
+
+/* Réduction de l'espace entre le bandeau et le contenu */
+.accordion-card .fiche-content {
+  margin-top: 8px !important;
+  padding: 6px 0 !important;
+}
