@@ -10,8 +10,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { 
-  getFirestore, collection, addDoc, getDocs, query, orderBy, startAt, endAt,
-  writeBatch, doc, setDoc 
+  getFirestore, collection, addDoc, getDocs, setDoc, doc 
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -23,8 +22,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 window.db = getFirestore(app);
 
-// ----------------------------------------------------------
-// AJOUT CLIENT
+// ✅ AJOUT CLIENT
 async function ajouterNouveauClient(){
   if(!search.value.trim()) return alert("Nom vide.");
   if(!tel.value.trim()) return alert("Téléphone manquant.");
@@ -40,38 +38,39 @@ async function ajouterNouveauClient(){
 }
 window.ajouterNouveauClient = ajouterNouveauClient;
 
-// ----------------------------------------------------------
-// FORMAT TÉLÉPHONE
+// ✅ FORMAT TELEPHONE
 function formatTel(){
   let v = tel.value.replace(/\D/g,"").slice(0,10);
   tel.value = v.replace(/(..)(?=.)/g,"$1-");
 }
 
-// ----------------------------------------------------------
-// RECHERCHE CLIENT (NOM OU TÉLÉPHONE)
+// ✅ NOUVELLE RECHERCHE (Nom + Téléphone)
 async function rechercherClient(){
-  let val = search.value.trim();
+  let input = search.value.trim().toUpperCase();
+  let telClean = search.value.replace(/\D/g,""); // numéro sans tirets
+
   suggest.innerHTML = "";
-  if(val.length < 2){ suggest.style.display="none"; return; }
+  if(input.length < 2 && telClean.length < 2){ suggest.style.display="none"; return; }
 
-  let rechercheNom = val.toUpperCase();
-  let rechercheTel = val.replace(/\D/g,"");
+  let snap = await getDocs(collection(db, "clients"));
+  let results = [];
 
-  let snapNom = await getDocs(query(collection(db,"clients"), orderBy("nom"), startAt(rechercheNom), endAt(rechercheNom + "\uf8ff")));
-  let snapTel = await getDocs(collection(db,"clients"));
+  snap.forEach(doc=>{
+    let c = doc.data();
+    let nom = c.nom.toUpperCase();
+    let phone = c.tel.replace(/\D/g,"");
 
-  let resultats = [];
+    if(nom.includes(input) || phone.includes(telClean)){
+      results.push(c);
+    }
+  });
 
-  snapNom.forEach(d=>resultats.push(d.data()));
-  snapTel.forEach(d=>{ if(d.data().tel.includes(rechercheTel)) resultats.push(d.data()); });
-
-  if(resultats.length === 0){
+  if(results.length === 0){
     suggest.innerHTML = `
       <div class="sug" style="color:#b00;">Aucun résultat</div>
-      <button class="primary small-btn" style="width:100%;margin:6px 0;" onclick="ajouterNouveauClient()">➕ Ajouter ce client</button>
-    `;
+      <button class="primary small-btn" style="width:100%;margin:6px 0;" onclick="ajouterNouveauClient()">➕ Ajouter ce client</button>`;
   } else {
-    resultats.forEach(c=>{
+    results.forEach(c=>{
       suggest.innerHTML += `<div class="sug" onclick='remplirClient("${c.nom}","${c.tel}")'>${c.nom} — ${c.tel}</div>`;
     });
   }
@@ -80,14 +79,9 @@ async function rechercherClient(){
 }
 window.rechercherClient = rechercherClient;
 
-function remplirClient(n,t){
-  nom.value = n;
-  tel.value = t;
-  suggest.style.display = "none";
-}
+function remplirClient(n,t){ nom.value = n; tel.value = t; suggest.style.display = "none"; }
 
-// ----------------------------------------------------------
-// APPAREILS
+// ✅ APPAREILS
 let appareils = [];
 function ajouterAppareil(){
   appareils.push({ type:type.value, marque:marque.value, modele:modele.value });
@@ -103,14 +97,12 @@ function afficherAppareils(){
 function supprimerAppareil(i){ appareils.splice(i,1); afficherAppareils(); }
 window.ajouterAppareil = ajouterAppareil;
 
-// ----------------------------------------------------------
-// SAUVEGARDE AFFICHAGE
+// ✅ SAUVEGARDE
 document.querySelectorAll('input[name="sauv"]').forEach(r=>{
   r.onchange = ()=>{ optionsSauvegarde.style.display = (r.value==="Oui")?"block":"none"; };
 });
 
-// ----------------------------------------------------------
-// CRÉATION FICHE
+// ✅ CREATION FICHE
 async function creer(){
   if(!nom.value.trim()) return alert("Nom manquant");
   if(!tel.value.trim()) return alert("Téléphone manquant");
@@ -136,14 +128,16 @@ location.href="historique.html";
 }
 window.creer = creer;
 
-// ----------------------------------------------------------
+// ✅ FERMETURE LISTE
 document.addEventListener("click", e=>{ if(!e.target.closest("#search") && !e.target.closest("#suggest")) suggest.style.display="none"; });
-search.addEventListener("input", ()=>{ if(search.value.trim().length < 2) suggest.style.display="none"; });
-document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.display="none"; });
 
+// ✅ ACCORDÉON
+function toggleAccordion(el){ el.parentNode.classList.toggle("open"); }
+window.toggleAccordion = toggleAccordion;
 </script>
 
 <script>
+// ✅ MARQUES PAR TYPE
 const marquesParType = {
   "Ordinateur Portable": ["Acer","Asus","HP","Lenovo","Dell","MSI","Apple","Samsung","Toshiba","Autre"],
   "Ordinateur Fixe": ["Assembler","Acer","Asus","HP","Dell","Lenovo","Autre"],
@@ -180,7 +174,6 @@ majMarques();
 <label>Mot de passe (optionnel) :</label>
 <input id="mdp" class="input">
 
-<!-- Appareils -->
 <div class="card-block">
 <label>Ajouter un appareil :</label>
 <div class="grid-3">
@@ -195,7 +188,6 @@ majMarques();
 <div id="listeAppareils"></div>
 </div>
 
-<!-- Sauvegarde -->
 <div class="card-block">
 <label>Sauvegarde :</label><br>
 <input type="radio" name="sauv" value="Non" checked> Non
@@ -210,9 +202,8 @@ majMarques();
 </div>
 </div>
 
-<!-- Travaux -->
 <div class="accordion">
-  <div class="accordion-header" onclick="this.parentNode.classList.toggle('open')">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
     Travaux à réaliser :
     <span class="arrow">▼</span>
   </div>
