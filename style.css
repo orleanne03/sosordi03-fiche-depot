@@ -196,4 +196,47 @@ h1{text-align:center;margin-bottom:25px;color:#143658;font-weight:600;}
   display:block;
   width:100%;
 }
+/* ===== Patch d'affichage — Page Historique uniquement ===== */
+body.history-page{
+  /* on casse le flex global pour empiler titre + liste */
+  display:block;                      /* <- clé du fix */
+  min-height:100svh;
+  background:#e9edf3;
+}
+
+.history-page h1{
+  max-width:900px;
+  margin:20px auto 10px;
+  padding:0 15px;
+}
+
+.history-container{
+  width:100%;
+  max-width:900px;
+  margin:0 auto 40px;
+  padding:0 15px;
+  display:flex;
+  flex-direction:column;              /* cartes les unes sous les autres */
+  gap:16px;
+}
+
+/* un peu de style pour la carte, sans toucher aux options */
+.fiche-card{
+  background:#fff;
+  padding:18px;
+  border-radius:14px;
+  box-shadow:0 6px 18px rgba(0,0,0,.08);
+  position:relative;
+}
+
+.delete-btn{
+  position:absolute; top:10px; right:10px;
+  border:none; border-radius:8px; padding:6px 8px;
+  background:#ff6b6b; color:#fff; cursor:pointer;
+}
+
+.fiche-name{font-weight:700;font-size:22px;margin-bottom:4px;}
+.fiche-date{opacity:.9;margin-bottom:6px;}
+.history-container p{margin:6px 0;line-height:1.4;}
+/* ========================================================== */
 @keyframes pop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
