@@ -709,3 +709,13 @@ label[for="nom"]::before {
 .accordion-header {
   padding: 6px 14px !important;
 }
+/* --- Séparateurs fins dans les fiches de l'historique --- */
+.history-page .fiche-card p {
+  padding: 6px 0; /* ne change pas la taille, juste l'espace interne */
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+}
+
+/* Pas de ligne sous la dernière */
+.history-page .fiche-card p:last-of-type {
+  border-bottom: none;
+}
