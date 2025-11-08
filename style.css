@@ -719,3 +719,26 @@ label[for="nom"]::before {
 .history-page .fiche-card p:last-of-type {
   border-bottom: none;
 }
+/* --- Réduction hauteur header fiche historique --- */
+.fiche-header {
+  padding: 8px 14px !important; /* au lieu de ~16-20 */
+  min-height: unset !important;
+}
+
+/* Pastille couleur un peu plus petite */
+.color-tag {
+  width: 14px !important;
+  height: 14px !important;
+}
+
+/* Nom légèrement rapproché verticalement */
+.fiche-name {
+  line-height: 1.2 !important;
+}
+
+/* Bouton poubelle réduit légèrement */
+.delete-btn {
+  padding: 6px 8px !important;
+  font-size: 14px !important;
+  border-radius: 8px !important;
+}
