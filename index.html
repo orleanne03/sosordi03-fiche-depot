@@ -34,18 +34,12 @@ window.doc = doc;
 
 function toggleAccordion(el){
     el.parentNode.classList.toggle("open");
-  }
-  window.toggleAccordion = toggleAccordion;
+}
+window.toggleAccordion = toggleAccordion;
 </script>
 
 <style>
-/* Style rapidos pour bloc carte mobile */
 .card-block { background:#f6f9fc;padding:12px;border-radius:8px;margin-top:12px;border:1px solid #d8e0e8; }
-.accordion { margin-top:12px; border:1px solid #dce6f0; border-radius:8px; overflow:hidden; }
-.accordion-header { padding:10px 12px; background:#f4f7fb; cursor:pointer; font-weight:600; display:flex; justify-content:space-between; align-items:center; }
-.accordion-content { display:none; padding:10px 12px; }
-.accordion.open .accordion-content { display:block; }
-.accordion .arrow { opacity:.7; font-size:12px; margin-left:8px; }
 </style>
 
 </head>
@@ -55,8 +49,13 @@ function toggleAccordion(el){
 
 <h1>🖥️ Fiche de Dépôt - sosordi03</h1>
 
-<input type="text" id="search" class="input" placeholder="🔍 Rechercher un client..." oninput="rechercherClient()">
+<input type="text" id="search" class="input" placeholder="🔍 RECHERCHER UN CLIENT..." oninput="rechercherClient()">
 <div id="suggest" class="suggest-box"></div>
+
+<!-- ✅ Bouton Ajouter Client -->
+<button class="secondary small-btn" onclick="ajouterClient()" style="margin-top:8px;">
+  ➕ Ajouter ce client
+</button>
 
 <div class="card">
 
@@ -66,15 +65,7 @@ function toggleAccordion(el){
 <label>Téléphone :</label>
 <input id="tel" class="input" maxlength="14" oninput="formatTel();">
 
-<!-- === NOUVEAU : Mot de passe client + option majuscule initiale === -->
-<div class="card-block" style="margin-top:12px;">
-  <label>Mot de passe du client (facultatif) :</label>
-  <input id="mdp" class="input" placeholder="Saisir le mot de passe">
-
- 
-<!-- === FIN === -->
-
-<!-- ✅ Bloc Appareils en PREMIER (mobile ok) -->
+<!-- ✅ Bloc Appareils -->
 <div class="card-block">
 <label>Ajouter un appareil :</label>
 
@@ -103,7 +94,6 @@ function toggleAccordion(el){
   </div>
 </div>
 
-
 <button class="secondary small-btn" onclick="ajouterAppareil()">➕ Ajouter cet appareil</button>
 <div id="listeAppareils"></div>
 </div>
@@ -121,10 +111,9 @@ function toggleAccordion(el){
   <label><input type="checkbox" name="sauv-item" value="Favoris"> Favoris</label><br>
   <label><input type="checkbox" name="sauv-item" value="Mots de passe"> Mots de passe</label><br>
 </div>
-
 </div>
 
-<!-- ✅ Travaux -->
+<!-- ✅ Travaux à réaliser -->
 <div class="accordion">
   <div class="accordion-header" onclick="toggleAccordion(this)">
     Travaux à réaliser :
@@ -176,6 +165,20 @@ async function rechercherClient(){
 function remplirClient(n,t){ nom.value = n; tel.value = t; suggest.style.display = "none"; }
 
 // ----------------------------------------------------------
+// ✅ AJOUT MANUEL CLIENT
+async function ajouterClient(){
+  if(!nom.value.trim()) return alert("Entre le nom du client");
+  if(!tel.value.trim()) return alert("Entre le téléphone du client");
+
+  let q = query(collection(db,"clients"), orderBy("nom"), startAt(nom.value), endAt(nom.value+"\uf8ff"));
+  let snap = await getDocs(q);
+  if(!snap.empty) return alert("Ce client existe déjà ✅");
+
+  await addDoc(collection(db,"clients"),{ nom: nom.value.toUpperCase(), tel: tel.value });
+  alert("✅ Client ajouté !");
+}
+
+// ----------------------------------------------------------
 // APPAREILS
 let appareils = [];
 function ajouterAppareil(){
@@ -192,36 +195,21 @@ function afficherAppareils(){
 function supprimerAppareil(i){ appareils.splice(i,1); afficherAppareils(); }
 
 // ----------------------------------------------------------
-// AFFICHAGE OPTIONS SAUVEGARDE
+// SAUVEGARDE
 document.querySelectorAll('input[name="sauv"]').forEach(r=>{
   r.onchange = ()=>{ optionsSauvegarde.style.display = (r.value==="Oui")?"block":"none"; };
 });
 
 // ----------------------------------------------------------
-// CRÉATION FICHE (avec auto-ajout client)
+// CRÉATION FICHE
 async function creer(){
   if(!nom.value.trim()) return alert("Nom manquant");
   if(!tel.value.trim()) return alert("Téléphone manquant");
   if(appareils.length === 0) return alert("Ajoute au moins un appareil");
 
-// ✅ Sauvegarde Oui/Non
 let sauvegardeChoix = document.querySelector('input[name="sauv"]:checked')?.value || "Non";
-
-// ✅ Détails sauvegarde
-let sauvItems = [...document.querySelectorAll('input[name="sauv-item"]:checked')]
-    .map(c => c.value);
-
-// ✅ Travaux cochés
-let travauxSelectionnes = [...document.querySelectorAll('.trav:checked')]
-    .map(c => c.value);
-
-// ✅ Mot de passe et option de capitalisation
-let mdpRaw = (document.getElementById("mdp").value || "").trim();
-let mdpOption = document.querySelector('input[name="mdpCap"]:checked')?.value || "no";
-let mdpFinal = mdpRaw;
-if(mdpRaw && mdpOption === "firstUpper"){
-  mdpFinal = mdpRaw.charAt(0).toUpperCase() + mdpRaw.slice(1);
-}
+let sauvItems = [...document.querySelectorAll('input[name="sauv-item"]:checked')].map(c => c.value);
+let travauxSelectionnes = [...document.querySelectorAll('.trav:checked')].map(c => c.value);
 
   await addDoc(collection(db,"fiches"),{
     nom: nom.value,
@@ -231,66 +219,36 @@ if(mdpRaw && mdpOption === "firstUpper"){
     sauvegarde: sauvegardeChoix,
     sauvegardeItems: sauvItems,
     travaux: travauxSelectionnes,
-    password: mdpFinal,          // <-- mot de passe stocké
     date: new Date().toISOString()
   });
 
   location.href="historique.html";
 }
-// 🔥 Fermer la liste si on clique ailleurs
-document.addEventListener("click", function(e){
-  if(!e.target.closest("#search") && !e.target.closest("#suggest")){
-    suggest.style.display = "none";
-  }
-});
-
-// 🔥 Fermer si champ vide
-search.addEventListener("input", function(){
-  if(search.value.trim().length < 2){
-    suggest.style.display = "none";
-  }
-});
-
-// 🔥 Fermer avec Échap
-document.addEventListener("keydown", function(e){
-  if(e.key === "Escape"){
-    suggest.style.display = "none";
-  }
-});
-
 </script>
+
 <script>
-  const marquesParType = {
-    "Ordinateur Portable": ["Acer","Asus","HP","Lenovo","Dell","MSI","Apple","Samsung","Toshiba","Autre"],
-    "Ordinateur Fixe": ["Assembler","Acer","Asus","HP","Dell","Lenovo","Autre"],
-    "Tablette": ["Apple","Samsung","Lenovo","Huawei","Microsoft Surface","Autre"],
-    "Disque dur externe": ["Seagate","Western Digital","Toshiba","Samsung","LaCie","Autre"],
-    "Écran": ["Samsung","LG","AOC","Iiyama","Philips","Dell","Asus","Autre"],
-    "Imprimante": ["HP","Canon","Epson","Brother","Lexmark","Samsung","Autre"],
-    "Autre": ["Autre"]
-  };
+const marquesParType = {
+  "Ordinateur Portable": ["Acer","Asus","HP","Lenovo","Dell","MSI","Apple","Samsung","Toshiba","Autre"],
+  "Ordinateur Fixe": ["Assembler","Acer","Asus","HP","Dell","Lenovo","Autre"],
+  "Tablette": ["Apple","Samsung","Lenovo","Huawei","Microsoft Surface","Autre"],
+  "Disque dur externe": ["Seagate","Western Digital","Toshiba","Samsung","LaCie","Autre"],
+  "Écran": ["Samsung","LG","AOC","Iiyama","Philips","Dell","Asus","Autre"],
+  "Imprimante": ["HP","Canon","Epson","Brother","Lexmark","Samsung","Autre"],
+  "Autre": ["Autre"]
+};
 
-  function majMarques(){
-    let type = document.getElementById("type").value;
-    let select = document.getElementById("marque");
-    select.innerHTML = "";
-
-    marquesParType[type].forEach(m=>{
-      let opt = document.createElement("option");
-      opt.textContent = m;
-      select.appendChild(opt);
-    });
-  }
-
-  majMarques(); // initialise au chargement
-
-  // Si "Autre" est choisi → champ texte libre
-  document.getElementById("marque").addEventListener("change", function(){
-    if(this.value === "Autre"){
-      this.outerHTML = '<input id="marque" class="input" placeholder="Saisir la marque">';
-    }
+function majMarques(){
+  let type = document.getElementById("type").value;
+  let select = document.getElementById("marque");
+  select.innerHTML = "";
+  marquesParType[type].forEach(m=>{
+    let opt = document.createElement("option");
+    opt.textContent = m;
+    select.appendChild(opt);
   });
-  </script>
+}
+majMarques();
+</script>
 
 </body>
 </html>
