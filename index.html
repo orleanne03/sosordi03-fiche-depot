@@ -24,10 +24,10 @@ const db = getFirestore(app);
 
 // ===================== CLIENT =====================
 
+// (section CLIENT identique, aucun changement)
 async function ajouterNouveauClient(){
   let nomSaisi = search.value.trim().toUpperCase();
   let telSaisi = tel.value.trim().replace(/\D/g,"");
-
   if(!nomSaisi) return alert("Nom vide.");
   if(!telSaisi) return alert("Téléphone manquant.");
 
@@ -118,9 +118,15 @@ window.remplirClient = remplirClient;
 
 let appareils = [];
 function ajouterAppareil(){
-  appareils.push({ type:type.value, marque:marque.value, serie:serie.value || "", modele:modele.value });
+  appareils.push({ 
+    type:type.value, 
+    marque:marque.value, 
+    serie:serie.value || "", 
+    modele:(modeleAutre.style.display==="block" ? modeleAutre.value : modele.value)
+  });
   afficherAppareils(); 
   modele.value="";
+  modeleAutre.value="";
   serie.value="";
 }
 function afficherAppareils(){
@@ -166,7 +172,6 @@ window.majMarques = majMarques;
 
 function majSeries(){
   let liste = seriesParMarque[marque.value] || [];
-
   if(liste.length === 0){
     document.getElementById("serie-block").style.display="none";
   } else {
@@ -174,23 +179,33 @@ function majSeries(){
     serie.innerHTML = "";
     liste.forEach(s=> serie.innerHTML += `<option>${s}</option>`);
   }
-
   majModeles();
 }
 window.majSeries = majSeries;
 
 function majModeles(){
-  // ✅ LIGNE MODIFIÉE ICI (et uniquement ici)
   let key = (marque.value || "") + "__" + (serie.value || "");
   let liste = modelesParSerie[key] || [];
-  document.getElementById("listeModeles").innerHTML = liste.map(m => `<option value="${m}">`).join("");
+
+  modele.innerHTML = "";
+  liste.forEach(m=> modele.innerHTML += `<option>${m}</option>`);
+  modele.innerHTML += `<option value="autre">Autre (Saisie manuelle)</option>`;
 }
 window.majModeles = majModeles;
+
+// ✅ Afficher champ texte si "Autre"
+modele.addEventListener("change", ()=>{
+  if(modele.value === "autre"){
+    modeleAutre.style.display="block";
+  } else {
+    modeleAutre.style.display="none";
+  }
+});
 
 // ✅ APPRENTISSAGE
 async function enregistrer(){
   let s = serie.value.trim();
-  let m = modele.value.trim();
+  let m = (modeleAutre.style.display==="block" ? modeleAutre.value.trim() : modele.value.trim());
   let mk = marque.value;
 
   if(s){
@@ -284,6 +299,7 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.dis
 <div class="card-block">
 <label>Ajouter un appareil :</label>
 <div class="grid-3">
+
   <div><label>Type :</label><select id="type" class="input" onchange="majMarques()">
     <option value="" selected disabled>-- Choisir un type --</option>
     <option>Ordinateur Portable</option><option>Ordinateur Fixe</option><option>Tablette</option>
@@ -294,18 +310,20 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.dis
 
   <div id="serie-block" style="display:none;">
     <label>Série :</label>
-    <input id="serie" class="input" list="listeSeries" placeholder="Saisir ou choisir">
-    <datalist id="listeSeries"></datalist>
+    <input id="serie" class="input" placeholder="Saisir ou choisir">
   </div>
 
-  <div><label>Modèle :</label>
-  <input id="modele" class="input" list="listeModeles" placeholder="Saisir ou choisir">
-  <datalist id="listeModeles"></datalist>
+  <div>
+    <label>Modèle :</label>
+    <select id="modele" class="input"></select>
+    <input id="modeleAutre" class="input" placeholder="Saisir modèle" style="display:none;margin-top:6px;">
   </div>
+
 </div>
 
 <button class="secondary small-btn" onclick="ajouterAppareil()">➕ Ajouter cet appareil</button>
 <div id="listeAppareils"></div>
+
 </div>
 
 <div class="card-block">
