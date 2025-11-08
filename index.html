@@ -24,7 +24,6 @@ const db = getFirestore(app);
 
 // ===================== CLIENT =====================
 
-// (section CLIENT identique, aucun changement)
 async function ajouterNouveauClient(){
   let nomSaisi = search.value.trim().toUpperCase();
   let telSaisi = tel.value.trim().replace(/\D/g,"");
@@ -80,9 +79,9 @@ async function rechercherClient(){
   }
 
   all.forEach(doc=>{
-  let c = doc.data();
-  if(c.nom && c.nom.toUpperCase().startsWith(searchUpper)) results.push(c);
-});
+    let c = doc.data();
+    if(c.nom && c.nom.toUpperCase().startsWith(searchUpper)) results.push(c);
+  });
 
   let uniques = [];
   let seen = new Set();
@@ -193,13 +192,15 @@ function majModeles(){
 }
 window.majModeles = majModeles;
 
-// ✅ Afficher champ texte si "Autre"
-modele.addEventListener("change", ()=>{
-  if(modele.value === "autre"){
-    modeleAutre.style.display="block";
-  } else {
-    modeleAutre.style.display="none";
-  }
+// ✅ Afficher champ texte si "Autre" (compatible tablette)
+window.addEventListener("DOMContentLoaded", () => {
+  modele.addEventListener("change", () => {
+    if (modele.value === "autre") {
+      modeleAutre.style.display = "block";
+    } else {
+      modeleAutre.style.display = "none";
+    }
+  });
 });
 
 // ✅ APPRENTISSAGE
