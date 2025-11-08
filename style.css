@@ -93,17 +93,17 @@ h1{text-align:center;margin-bottom:25px;color:#143658;font-weight:600;}
 .link:hover{text-decoration:underline;}
 
 .suggest-box{
-  position:absolute;
+  position:relative; /* ⬅️ au lieu de absolute */
   background:white;
   width:100%;
-  max-width:900px;
   border-radius:8px;
   border:1px solid #d1dae6;
   display:none;
   box-shadow:0 6px 12px rgba(0,0,0,.08);
-  margin-top:-5px;
+  margin-top:6px; /* ⬅️ espace sous le champ */
   z-index:9999;
 }
+
 .sug{padding:12px;cursor:pointer;}
 .sug:hover{background:#e6f1ff;}
 
