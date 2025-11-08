@@ -29,9 +29,10 @@ async function ajouterNouveauClient(){
   if(!search.value.trim()) return alert("Nom vide.");
   if(!tel.value.trim()) return alert("Téléphone manquant.");
 
+  // Téléphone stocké **sans tirets**
   await setDoc(doc(collection(db,"clients")),{
     nom: search.value.trim().toUpperCase(),
-    tel: tel.value.trim()
+    tel: tel.value.replace(/\D/g,"") // <- IMPORTANT
   });
 
   nom.value = search.value.toUpperCase();
@@ -41,8 +42,11 @@ async function ajouterNouveauClient(){
 window.ajouterNouveauClient = ajouterNouveauClient;
 
 // ----------------------------------------------------------
-// FORMAT TÉLÉPHONE
-function formatTel(){ let v = tel.value.replace(/\D/g,"").slice(0,10); tel.value = v.replace(/(..)(?=.)/g,"$1-"); }
+// FORMAT TÉLÉPHONE (affichage seulement)
+function formatTel(){
+   let v = tel.value.replace(/\D/g,"").slice(0,10);
+   tel.value = v.replace(/(..)(?=.)/g,"$1-");
+}
 
 // ----------------------------------------------------------
 // RECHERCHE CLIENT (Nom OU Téléphone)
@@ -53,14 +57,13 @@ async function rechercherClient(){
 
   let snap;
 
-  // Si c'est un numéro => recherche sur téléphone
+  // Si saisie numérique -> recherche sur tel (stocké SANS tirets)
   if(/^[0-9\s\-]+$/.test(val)){
-    let telClean = val.replace(/\D/g,""); // retirer tirets
-    let q = query(collection(db,"clients"), where("tel","==", telClean.replace(/(..)(?=.)/g,"$1-")));
+    let telClean = val.replace(/\D/g,"");
+    let q = query(collection(db,"clients"), where("tel","==", telClean));
     snap = await getDocs(q);
   } 
   else {
-    // Sinon recherche par nom comme avant
     let q = query(collection(db, "clients"), orderBy("nom"), startAt(val), endAt(val + "\uf8ff"));
     snap = await getDocs(q);
   }
@@ -71,7 +74,9 @@ async function rechercherClient(){
   } else {
     snap.forEach(doc=>{
       let c = doc.data();
-      suggest.innerHTML += `<div class="sug" onclick='remplirClient("${c.nom}","${c.tel}")'>${c.nom} — ${c.tel}</div>`;
+      // Affichage téléphone remis en format propre
+      let t = c.tel.replace(/(..)(?=.)/g,"$1-");
+      suggest.innerHTML += `<div class="sug" onclick='remplirClient("${c.nom}","${t}")'>${c.nom} — ${t}</div>`;
     });
   }
 
@@ -117,7 +122,7 @@ let travauxSelectionnes = [...document.querySelectorAll('.trav:checked')].map(c 
 
 await addDoc(collection(db,"fiches"),{
   nom: nom.value,
-  tel: tel.value,
+  tel: tel.value.replace(/\D/g,""), // stock propre
   appareils: appareils,
   probleme: prob.value,
   sauvegarde: sauvegardeChoix,
@@ -132,15 +137,14 @@ location.href="historique.html";
 window.creer = creer;
 
 // ----------------------------------------------------------
-// FERMETURE LISTE
 document.addEventListener("click", e=>{ if(!e.target.closest("#search") && !e.target.closest("#suggest")) suggest.style.display="none"; });
 search.addEventListener("input", ()=>{ if(search.value.trim().length < 2) suggest.style.display="none"; });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.display="none"; });
 
 </script>
 
+<!-- MARQUES (inchangé) -->
 <script>
-// MARQUES
 const marquesParType = {
   "Ordinateur Portable": ["Acer","Asus","HP","Lenovo","Dell","MSI","Apple","Samsung","Toshiba","Autre"],
   "Ordinateur Fixe": ["Assembler","Acer","Asus","HP","Dell","Lenovo","Autre"],
@@ -159,4 +163,5 @@ majMarques();
 
 </head>
 <body>
-<!-- (le reste du HTML reste IDENTIQUE à votre version, aucun changement interface) -->
+
+<!-- TON HTML D’ORIGINE CI-DESSOUS NE CHANGE PAS -->
