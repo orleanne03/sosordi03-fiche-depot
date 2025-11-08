@@ -31,16 +31,7 @@ window.startAt = startAt;
 window.endAt = endAt;
 window.writeBatch = writeBatch;
 window.doc = doc;
-
-function toggleAccordion(el){
-    el.parentNode.classList.toggle("open");
-}
-window.toggleAccordion = toggleAccordion;
 </script>
-
-<style>
-.card-block { background:#f6f9fc;padding:12px;border-radius:8px;margin-top:12px;border:1px solid #d8e0e8; }
-</style>
 
 </head>
 <body>
@@ -49,11 +40,12 @@ window.toggleAccordion = toggleAccordion;
 
 <h1>🖥️ Fiche de Dépôt - sosordi03</h1>
 
-<input type="text" id="search" class="input" placeholder="🔍 RECHERCHER UN CLIENT..." oninput="rechercherClient()">
+<!-- ✅ Recherche client -->
+<input type="text" id="search" class="input" placeholder="🔍 Rechercher un client..." oninput="rechercherClient()">
 <div id="suggest" class="suggest-box"></div>
 
-<!-- ✅ Bouton Ajouter Client -->
-<button class="secondary small-btn" onclick="ajouterClient()" style="margin-top:8px;">
+<!-- ✅ Bouton ajouter uniquement si aucun résultat -->
+<button id="btnAddClient" class="secondary small-btn" onclick="ajouterClient()" style="margin-top:8px; display:none;">
   ➕ Ajouter ce client
 </button>
 
@@ -65,7 +57,6 @@ window.toggleAccordion = toggleAccordion;
 <label>Téléphone :</label>
 <input id="tel" class="input" maxlength="14" oninput="formatTel();">
 
-<!-- ✅ Bloc Appareils -->
 <div class="card-block">
 <label>Ajouter un appareil :</label>
 
@@ -98,7 +89,6 @@ window.toggleAccordion = toggleAccordion;
 <div id="listeAppareils"></div>
 </div>
 
-<!-- ✅ Sauvegarde -->
 <div class="card-block">
 <label>Sauvegarde :</label><br>
 <input type="radio" name="sauv" value="Non" checked> Non
@@ -113,7 +103,6 @@ window.toggleAccordion = toggleAccordion;
 </div>
 </div>
 
-<!-- ✅ Travaux à réaliser -->
 <div class="accordion">
   <div class="accordion-header" onclick="toggleAccordion(this)">
     Travaux à réaliser :
@@ -148,68 +137,63 @@ window.toggleAccordion = toggleAccordion;
 </div>
 
 <script>
-// ----------------------------------------------------------
-// FORMAT TÉLÉPHONE
+// 📞 Format téléphone
 function formatTel(){ let v = tel.value.replace(/\D/g,"").slice(0,10); tel.value = v.replace(/(..)(?=.)/g,"$1-"); }
 
-// ----------------------------------------------------------
-// RECHERCHE CLIENT
+// 🔍 Recherche + affichage bouton ajout si aucun résultat
 async function rechercherClient(){
   let val = search.value.trim().toUpperCase();
-  suggest.innerHTML = ""; if(val.length < 2) return;
+  suggest.innerHTML = "";
+
+  if(val.length < 2){
+    suggest.style.display = "none";
+    btnAddClient.style.display = "none";
+    return;
+  }
+
   let q = query(collection(db, "clients"), orderBy("nom"), startAt(val), endAt(val + "\uf8ff"));
   let snap = await getDocs(q);
-  snap.forEach(doc=>{ let c = doc.data(); suggest.innerHTML += `<div class="sug" onclick='remplirClient("${c.nom}","${c.tel}")'>${c.nom} — ${c.tel}</div>`; });
-  suggest.style.display = "block";
+
+  if (snap.empty) {
+    suggest.style.display = "none";
+    btnAddClient.style.display = "block";
+  } else {
+    snap.forEach(doc=>{
+      let c = doc.data();
+      suggest.innerHTML += `<div class="sug" onclick='remplirClient("${c.nom}","${c.tel}")'>${c.nom} — ${c.tel}</div>`;
+    });
+    suggest.style.display = "block";
+    btnAddClient.style.display = "none";
+  }
 }
+
+// ✅ Ajout client si non trouvé
+async function ajouterClient(){
+  if(!search.value.trim()) return;
+  await addDoc(collection(db,"clients"), { nom: search.value.toUpperCase(), tel: "" });
+  nom.value = search.value.toUpperCase();
+  tel.value = "";
+  suggest.style.display = "none";
+  btnAddClient.style.display = "none";
+}
+
+// Remplissage auto
 function remplirClient(n,t){ nom.value = n; tel.value = t; suggest.style.display = "none"; }
 
-// ----------------------------------------------------------
-// ✅ AJOUT MANUEL CLIENT
-async function ajouterClient(){
-  if(!nom.value.trim()) return alert("Entre le nom du client");
-  if(!tel.value.trim()) return alert("Entre le téléphone du client");
-
-  let q = query(collection(db,"clients"), orderBy("nom"), startAt(nom.value), endAt(nom.value+"\uf8ff"));
-  let snap = await getDocs(q);
-  if(!snap.empty) return alert("Ce client existe déjà ✅");
-
-  await addDoc(collection(db,"clients"),{ nom: nom.value.toUpperCase(), tel: tel.value });
-  alert("✅ Client ajouté !");
-}
-
-// ----------------------------------------------------------
-// APPAREILS
+// Appareils
 let appareils = [];
-function ajouterAppareil(){
-  appareils.push({ type:type.value, marque:marque.value, modele:modele.value });
-  afficherAppareils(); modele.value="";
-}
-function afficherAppareils(){
-  listeAppareils.innerHTML = appareils.map((a,i)=>`
-  <div style="padding:6px;border-bottom:1px solid #ccc;">
-    ${a.type} — ${a.marque} ${a.modele}
-    <button class="danger small-btn" onclick="supprimerAppareil(${i})">🗑</button>
-  </div>`).join("");
-}
+function ajouterAppareil(){ appareils.push({ type:type.value, marque:marque.value, modele:modele.value }); afficherAppareils(); modele.value=""; }
+function afficherAppareils(){ listeAppareils.innerHTML = appareils.map((a,i)=>`<div style="padding:6px;border-bottom:1px solid #ccc;">${a.type} — ${a.marque} ${a.modele} <button class="danger small-btn" onclick="supprimerAppareil(${i})">🗑</button></div>`).join(""); }
 function supprimerAppareil(i){ appareils.splice(i,1); afficherAppareils(); }
 
-// ----------------------------------------------------------
-// SAUVEGARDE
-document.querySelectorAll('input[name="sauv"]').forEach(r=>{
-  r.onchange = ()=>{ optionsSauvegarde.style.display = (r.value==="Oui")?"block":"none"; };
-});
+// Sauvegarde affichage
+document.querySelectorAll('input[name="sauv"]').forEach(r=>{ r.onchange = ()=>{ optionsSauvegarde.style.display = (r.value==="Oui")?"block":"none"; }; });
 
-// ----------------------------------------------------------
-// CRÉATION FICHE
+// Création fiche
 async function creer(){
-  if(!nom.value.trim()) return alert("Nom manquant");
-  if(!tel.value.trim()) return alert("Téléphone manquant");
-  if(appareils.length === 0) return alert("Ajoute au moins un appareil");
-
-let sauvegardeChoix = document.querySelector('input[name="sauv"]:checked')?.value || "Non";
-let sauvItems = [...document.querySelectorAll('input[name="sauv-item"]:checked')].map(c => c.value);
-let travauxSelectionnes = [...document.querySelectorAll('.trav:checked')].map(c => c.value);
+  let sauvegardeChoix = document.querySelector('input[name="sauv"]:checked')?.value || "Non";
+  let sauvItems = [...document.querySelectorAll('input[name="sauv-item"]:checked')].map(c => c.value);
+  let travauxSelectionnes = [...document.querySelectorAll('.trav:checked')].map(c => c.value);
 
   await addDoc(collection(db,"fiches"),{
     nom: nom.value,
@@ -224,9 +208,13 @@ let travauxSelectionnes = [...document.querySelectorAll('.trav:checked')].map(c 
 
   location.href="historique.html";
 }
-</script>
 
-<script>
+// Fermeture suggestion
+document.addEventListener("click", e=>{ if(!e.target.closest("#search") && !e.target.closest("#suggest")) suggest.style.display = "none"; });
+search.addEventListener("input", ()=>{ if(search.value.length < 2) suggest.style.display = "none"; });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.display="none"; });
+
+// Marques auto
 const marquesParType = {
   "Ordinateur Portable": ["Acer","Asus","HP","Lenovo","Dell","MSI","Apple","Samsung","Toshiba","Autre"],
   "Ordinateur Fixe": ["Assembler","Acer","Asus","HP","Dell","Lenovo","Autre"],
@@ -238,14 +226,10 @@ const marquesParType = {
 };
 
 function majMarques(){
-  let type = document.getElementById("type").value;
-  let select = document.getElementById("marque");
+  let type = type?.value;
+  let select = marque;
   select.innerHTML = "";
-  marquesParType[type].forEach(m=>{
-    let opt = document.createElement("option");
-    opt.textContent = m;
-    select.appendChild(opt);
-  });
+  marquesParType[type].forEach(m=>{ let opt=document.createElement("option"); opt.textContent=m; select.appendChild(opt); });
 }
 majMarques();
 </script>
