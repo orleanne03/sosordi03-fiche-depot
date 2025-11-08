@@ -847,3 +847,9 @@ label[for="nom"]::before {
   border-radius: 50% !important;
   margin-right: 10px !important;
 }
+/* Centre verticalement le nom + pastille dans le bloc */
+.history-page .fiche-header-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
