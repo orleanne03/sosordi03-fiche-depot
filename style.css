@@ -267,3 +267,23 @@ body.history-page{
   padding-top: 12px !important;
   margin-top: 16px !important;
 }
+/* Ligne sous numéro de téléphone */
+.history-page .fiche-card p:nth-of-type(2) {
+  border-bottom: 1px solid rgba(0,0,0,.18) !important;
+  padding-bottom: 12px !important;
+  margin-bottom: 14px !important;
+}
+
+/* Ligne sous Mot de passe */
+.history-page .fiche-card p:has(> strong):not(:contains('Travaux')) {
+  border-bottom: 1px solid rgba(0,0,0,.18) !important;
+  padding-bottom: 12px !important;
+  margin-bottom: 14px !important;
+}
+
+/* Ligne au-dessus de Travaux (déjà validée) */
+.history-page .fiche-card p:last-of-type {
+  border-top: 1px solid rgba(0,0,0,.22) !important;
+  padding-top: 12px !important;
+  margin-top: 16px !important;
+}
