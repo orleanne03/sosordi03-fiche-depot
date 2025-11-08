@@ -642,3 +642,16 @@ label[for="nom"]::before {
 .accordion-content {
   padding: 8px 0 !important;
 }
+/* Réduction de la taille de police dans Travaux */
+.checkbox-group label {
+  font-size: 15px !important; /* tu peux mettre 14px si tu veux encore plus petit */
+}
+
+.checkbox-group input[type="checkbox"] {
+  transform: scale(1.1); /* garde une case lisible même si le texte est plus petit */
+}
+
+/* Réduction du titre accordéon */
+.accordion-header {
+  font-size: 17px !important;
+}
