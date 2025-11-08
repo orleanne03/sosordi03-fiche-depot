@@ -372,3 +372,69 @@ body.history-page{
   flex-direction: column;
   gap: 8px;
 }
+/* === Boutons radio (Sauvegarde) === */
+input[type="radio"] {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #5c6f82;
+  border-radius: 50%;
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+  margin-right: 6px;
+}
+
+input[type="radio"]:checked::after {
+  content: "";
+  width: 12px;
+  height: 12px;
+  background: #0078d7;
+  border-radius: 50%;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+}
+
+/* Texte aligné proprement */
+input[type="radio"] + label,
+label input[type="radio"] {
+  font-size: 17px;
+  cursor: pointer;
+}
+
+
+/* === Checkboxes (Travaux) === */
+input[type="checkbox"] {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #5c6f82;
+  border-radius: 6px;
+  display: inline-block;
+  position: relative;
+  cursor: pointer;
+  margin-right: 8px;
+}
+
+input[type="checkbox"]:checked {
+  background: #0078d7;
+  border-color: #0078d7;
+}
+
+input[type="checkbox"]:checked::after {
+  content: "✔";
+  color: white;
+  font-size: 14px;
+  position: absolute;
+  top: -1px;
+  left: 3px;
+}
+
+/* Alignement propre dans la liste */
+.checkbox-group label,
+.radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
