@@ -449,3 +449,44 @@ body.history-page{
 .delete-btn {
   margin-left: auto !important;
 }
+/* Enlève l'alignement centré qui cassait tout */
+.accordion-card {
+  text-align: left !important;
+}
+
+/* Header : couleur + nom + corbeille alignés sur une ligne */
+.fiche-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100%;
+  padding: 12px 18px;
+}
+
+/* Groupe couleur + nom */
+.fiche-header-left {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+/* Pastille couleur */
+.color-tag {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+/* Nom du client */
+.fiche-name {
+  margin: 0;
+  padding: 0;
+  font-weight: 700;
+  font-size: 1.4rem;
+}
+
+/* Bouton corbeille à droite */
+.delete-btn {
+  margin-left: auto !important;
+}
