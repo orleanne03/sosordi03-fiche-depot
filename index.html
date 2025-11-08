@@ -10,8 +10,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { 
-  getFirestore, collection, addDoc, getDocs, query, orderBy, startAt, endAt,
-  writeBatch, doc, setDoc
+  getFirestore, collection, addDoc, getDocs, writeBatch, doc 
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -23,8 +22,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 window.db = getFirestore(app);
 
-// ----------------------------------------------------------
-// ✅ AJOUT CLIENT SANS DOUBLONS (SEULE CHOSE MODIFIÉE)
+// ===================== CLIENT =====================
+
 async function ajouterNouveauClient(){
   let nomSaisi = search.value.trim().toUpperCase();
   let telSaisi = tel.value.trim().replace(/\D/g,"");
@@ -57,15 +56,11 @@ async function ajouterNouveauClient(){
 }
 window.ajouterNouveauClient = ajouterNouveauClient;
 
-// ----------------------------------------------------------
-// FORMAT TÉLÉPHONE (affichage)
 function formatTel(){
   let v = tel.value.replace(/\D/g,"").slice(0,10);
   tel.value = v.replace(/(..)(?=.)/g,"$1-");
 }
 
-// ----------------------------------------------------------
-// ✅ RECHERCHE CLIENT (Nom OU Téléphone normalisé)
 async function rechercherClient(){
   let input = search.value.trim();
   let searchUpper = input.toUpperCase();
@@ -75,7 +70,6 @@ async function rechercherClient(){
   let all = await getDocs(collection(db,"clients"));
   let results = [];
 
-  // --- Téléphone ---
   let telSearch = input.replace(/\D/g,"");
   if(telSearch.length >= 2){
     all.forEach(doc=>{
@@ -85,13 +79,11 @@ async function rechercherClient(){
     });
   }
 
-  // --- Nom ---
   all.forEach(doc=>{
     let c = doc.data();
     if(c.nom && c.nom.toUpperCase().includes(searchUpper)) results.push(c);
   });
 
-  // --- Supprimer doublons ---
   let uniques = [];
   let seen = new Set();
   results.forEach(c=>{
@@ -102,7 +94,6 @@ async function rechercherClient(){
     }
   });
 
-  // --- Affichage ---
   if(uniques.length === 0){
     suggest.innerHTML = `<div class="sug" style="color:#b00;">Aucun résultat</div>
     <button class="primary small-btn" style="width:100%;margin:6px 0;" onclick="ajouterNouveauClient()">➕ Ajouter ce client</button>`;
@@ -116,8 +107,6 @@ async function rechercherClient(){
 }
 window.rechercherClient = rechercherClient;
 
-// ----------------------------------------------------------
-// ✅ Correction du clic
 function remplirClient(n,t){
   nom.value = n;
   tel.value = t;
@@ -125,12 +114,13 @@ function remplirClient(n,t){
 }
 window.remplirClient = remplirClient;
 
-// ----------------------------------------------------------
-// APPAREILS
+// ===================== APPAREILS =====================
+
 let appareils = [];
 function ajouterAppareil(){
   appareils.push({ type:type.value, marque:marque.value, modele:modele.value });
-  afficherAppareils(); modele.value="";
+  afficherAppareils(); 
+  modele.value="";
 }
 function afficherAppareils(){
   listeAppareils.innerHTML = appareils.map((a,i)=>`
@@ -142,14 +132,52 @@ function afficherAppareils(){
 function supprimerAppareil(i){ appareils.splice(i,1); afficherAppareils(); }
 window.ajouterAppareil = ajouterAppareil;
 
-// ----------------------------------------------------------
-// SAUVEGARDE
+// ---- MARQUES PAR TYPE (inchangé) ----
+const marquesParType = {
+  "Ordinateur Portable": ["Acer","Asus","HP","Lenovo","Dell","MSI","Apple","Samsung","Toshiba","Autre"],
+  "Ordinateur Fixe": ["Assembler","Acer","Asus","HP","Dell","Lenovo","Autre"],
+  "Tablette": ["Apple","Samsung","Lenovo","Huawei","Microsoft Surface","Autre"],
+  "Disque dur externe": ["Seagate","Western Digital","Toshiba","Samsung","LaCie","Autre"],
+  "Écran": ["Samsung","LG","AOC","Iiyama","Philips","Dell","Asus","Autre"],
+  "Imprimante": ["HP","Canon","Epson","Brother","Lexmark","Samsung","Autre"],
+  "Autre": ["Autre"]
+};
+
+// ---- ✅ AJOUT : MODELES PAR MARQUE ----
+const modelesParMarque = {
+  "Acer": ["Aspire","Swift","Nitro","Predator","Spin","Extensa"],
+  "Asus": ["VivoBook","ZenBook","ROG","TUF Gaming","ExpertBook"],
+  "HP": ["Pavilion","Envy","Omen","ProBook","EliteBook","Spectre"],
+  "Lenovo": ["IdeaPad","ThinkPad","Legion","Yoga"],
+  "Dell": ["Inspiron","XPS","Latitude","Vostro","Alienware"],
+  "MSI": ["Modern","Prestige","Bravo","Katana","Raider","Stealth"],
+  "Apple": ["MacBook Air","MacBook Pro","iMac"],
+  "Samsung": ["Galaxy Book","Notebook Plus","Odyssey"],
+  "Toshiba": ["Satellite","Tecra","Portege"],
+  "Autre": []
+};
+
+function majMarques(){
+  marque.innerHTML = "";
+  marquesParType[type.value].forEach(m=> marque.innerHTML += `<option>${m}</option>`);
+  majModeles();
+}
+function majModeles(){
+  modele.innerHTML = "";
+  (modelesParMarque[marque.value]||[]).forEach(md=> modele.innerHTML += `<option>${md}</option>`);
+}
+window.majMarques = majMarques;
+window.majModeles = majModeles;
+majMarques();
+
+// ===================== SAUVEGARDE =====================
+
 document.querySelectorAll('input[name="sauv"]').forEach(r=>{
   r.onchange = ()=>{ optionsSauvegarde.style.display = (r.value==="Oui")?"block":"none"; };
 });
 
-// ----------------------------------------------------------
-// ✅ AJOUT DU CHAMP COULEUR DANS LA FICHE
+// ===================== CRÉATION FICHE =====================
+
 async function creer(){
   if(!nom.value.trim()) return alert("Nom manquant");
   if(!tel.value.trim()) return alert("Téléphone manquant");
@@ -168,7 +196,7 @@ await addDoc(collection(db,"fiches"),{
   sauvegardeItems: sauvItems,
   travaux: travauxSelectionnes,
   motdepasse: mdp.value.trim() || "",
-  couleur: couleur.value || "",  // ✅ ← ajout
+  couleur: couleur.value || "",
   date: new Date().toISOString()
 });
 
@@ -176,33 +204,12 @@ location.href="historique.html";
 }
 window.creer = creer;
 
-// ----------------------------------------------------------
-// FERMETURE LISTE
 document.addEventListener("click", e=>{ if(!e.target.closest("#search") && !e.target.closest("#suggest")) suggest.style.display="none"; });
 search.addEventListener("input", ()=>{ if(search.value.trim().length < 2) suggest.style.display="none"; });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.display="none"; });
-
 </script>
-
-<script>
-// MARQUES
-const marquesParType = {
-  "Ordinateur Portable": ["Acer","Asus","HP","Lenovo","Dell","MSI","Apple","Samsung","Toshiba","Autre"],
-  "Ordinateur Fixe": ["Assembler","Acer","Asus","HP","Dell","Lenovo","Autre"],
-  "Tablette": ["Apple","Samsung","Lenovo","Huawei","Microsoft Surface","Autre"],
-  "Disque dur externe": ["Seagate","Western Digital","Toshiba","Samsung","LaCie","Autre"],
-  "Écran": ["Samsung","LG","AOC","Iiyama","Philips","Dell","Asus","Autre"],
-  "Imprimante": ["HP","Canon","Epson","Brother","Lexmark","Samsung","Autre"],
-  "Autre": ["Autre"]
-};
-function majMarques(){
-  marque.innerHTML = "";
-  marquesParType[type.value].forEach(m=> marque.innerHTML += `<option>${m}</option>`);
-}
-majMarques();
-</script>
-
 </head>
+
 <body>
 
 <div class="container">
@@ -222,11 +229,11 @@ majMarques();
 <label>Couleur (pour repérage atelier) :</label>
 <select id="couleur" class="input">
   <option value="">Aucune</option>
-  <option value="red">🔴 Rouge</option>
-  <option value="blue">🔵 Bleu</option>
-  <option value="green">🟢 Vert</option>
-  <option value="yellow">🟡 Jaune</option>
-  <option value="orange">🟠 Orange</option>
+  <option value="red">Rouge</option>
+  <option value="blue">Bleu</option>
+  <option value="green">Vert</option>
+  <option value="yellow">Jaune</option>
+  <option value="orange">Orange</option>
 </select>
 
 <label>Mot de passe (optionnel) :</label>
@@ -235,21 +242,16 @@ majMarques();
 <div class="card-block">
 <label>Ajouter un appareil :</label>
 <div class="grid-3">
-  <div><label>Type :</label>
-<select id="type" class="input" onchange="majMarques()">
-  <option value="" selected disabled>-- Choisir un type --</option>
-  <option>Ordinateur Portable</option>
-  <option>Ordinateur Fixe</option>
-  <option>Tablette</option>
-  <option>Disque dur externe</option>
-  <option>Écran</option>
-  <option>Imprimante</option>
-  <option>Autre</option>
-</select>
+  <div><label>Type :</label><select id="type" class="input" onchange="majMarques()">
+    <option>Ordinateur Portable</option><option>Ordinateur Fixe</option><option>Tablette</option>
+    <option>Disque dur externe</option><option>Écran</option><option>Imprimante</option><option>Autre</option>
+  </select></div>
+
+  <div><label>Marque :</label><select id="marque" class="input" onchange="majModeles()"></select></div>
+
+  <div><label>Modèle :</label><select id="modele" class="input"></select></div>
 </div>
-  <div><label>Marque :</label><select id="marque" class="input"></select></div>
-  <div><label>Modèle :</label><input id="modele" class="input"></div>
-</div>
+
 <button class="secondary small-btn" onclick="ajouterAppareil()">➕ Ajouter cet appareil</button>
 <div id="listeAppareils"></div>
 </div>
@@ -295,6 +297,7 @@ majMarques();
 </div>
 
 <div class="center"><a href="historique.html" class="link">📚 Voir l'historique</a></div>
+
 </div>
 
 <script>
