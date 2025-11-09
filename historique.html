@@ -99,6 +99,7 @@ async function supprimer(id){
   await deleteDoc(doc(db,"fiches",id));
   location.reload();
 }
+window.supprimer = supprimer;
 
 async function saveTarifs(id){
   let estimation = document.getElementById("est_"+id).value.trim();
@@ -120,28 +121,19 @@ async function load(){
   snap.forEach(d=>{
     let f = d.data();
 
-    let appareils = f.appareils.map(a=>{
-  let acc = "";
+    let appareils = f.appareils.map(a=>`🔹 ${a.type} — ${a.marque}${a.serie?" "+a.serie:""} ${a.modele}`).join("<br>");
 
-  // Accessoires normaux
-  if (a.accessoires?.length) acc += a.accessoires.join(", ");
-
-  // Accessoires autres (texte libre)
-  if (a.accessoiresAutres?.length) acc += (acc ? ", " : "") + a.accessoiresAutres;
-
-  // Si aucun accessoire
-  acc = acc ? ` <br><small>🎒 Accessoires : ${acc}</small>` : "";
-
-  return `• ${a.type} — ${a.marque}${a.serie ? " "+a.serie:""} ${a.modele}${acc}`;
-}).join("<br>");
-    let sauv = (f.sauvegarde==="Oui") ? `Oui (${f.sauvegardeItems.join(", ")})` : "Non";
     let travaux = (f.travaux?.length) ? f.travaux.join("<br>") : "Aucun";
-    let mdp = f.motdepasse && f.motdepasse.trim() ? f.motdepasse : "Non renseigné";
 
-    // ✅ Accessoires formaté
-    let accessoires = (f.accessoires?.length)
-      ? f.accessoires.join(", ")
-      : "Aucun";
+    // ✅ Accessoires globaux
+    let accTxt = "";
+    if(f.accessoires?.length) accTxt += f.accessoires.join(", ");
+    if(f.accessoiresAutres && f.accessoiresAutres.trim() !== "") 
+        accTxt += (accTxt ? ", " : "") + f.accessoiresAutres;
+    if(accTxt) accTxt = `<p>🎒 Accessoires fournis : <strong>${accTxt}</strong></p>`;
+
+    let sauv = (f.sauvegarde==="Oui") ? `Oui (${f.sauvegardeItems.join(", ")})` : "Non";
+    let mdp = f.motdepasse?.trim() ? f.motdepasse : "Non renseigné";
 
     zone.innerHTML += `
 <div class="fiche-card accordion-card">
@@ -158,18 +150,16 @@ async function load(){
     <div class="fiche-date">📅 ${new Date(f.date).toLocaleDateString()}</div>
 
     <p>📞 ${formatTelAffichage(f.tel)}</p>
+    
+    <p>💻 Appareils déposés :<br>${appareils}</p>
 
-    <p>💻 Appareils déposés :<br> ${appareils.replace(/•/g,"🔹")}</p>
-
-    <!-- ✅ NOUVEAU : ACCESSOIRES -->
-    <p>🎒 Accessoires fournis : <strong>${accessoires}</strong></p>
+    ${accTxt}
 
     <p>💾 Sauvegarde : <strong>${sauv}</strong></p>
     <p>🔐 Mot de passe : <strong>${mdp}</strong></p>
     <p>🔧 Travaux :<br> <strong>${travaux}</strong></p>
     <p>📝 ${f.probleme}</p>
 
-    <!-- TARIFS -->
     <p>💰 Tarif estimation :<br>
        <input type="text" id="est_${d.id}" class="tarif-input" value="${f.tarifEstimation || ""}">
     </p>
@@ -185,7 +175,6 @@ async function load(){
   });
 }
 
-window.supprimer = supprimer;
 load();
 </script>
 
