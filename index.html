@@ -23,7 +23,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // =============================================================
-// ✅ CACHE + INDEX TÉLÉPHONE (ULTRA RAPIDE)
+// ✅ CACHE CLIENTS
 // =============================================================
 let clientsCache = [];
 let indexTel = {};
@@ -41,8 +41,6 @@ let indexTel = {};
     }
   });
 })();
-
-// ===================== CLIENT =====================
 
 async function ajouterNouveauClient(){
   let nomSaisi = search.value.trim().toUpperCase();
@@ -91,9 +89,7 @@ function formatTel(){
 }
 
 // =============================================================
-// ✅ RECHERCHE RAPIDE NOM + TÉLÉPHONE
-// NOM → dès 2 caractères
-// TEL → dès 3 chiffres, via indexTel
+// ✅ RECHERCHE CLIENT RAPIDE
 // =============================================================
 function rechercherClient(){
   let input = search.value.trim();
@@ -105,7 +101,6 @@ function rechercherClient(){
 
   let results = [];
 
-  // Recherche téléphone (très rapide)
   if(telSearch.length >= 3){
     let prefix = telSearch.slice(0,3);
     let group = indexTel[prefix] || [];
@@ -115,12 +110,10 @@ function rechercherClient(){
     });
   } 
 
-  // Recherche nom (début uniquement)
   clientsCache.forEach(c=>{
     if(c.nom && c.nom.toUpperCase().startsWith(searchUpper)) results.push(c);
   });
 
-  // Éviter doublons
   let uniques = [];
   let seen = new Set();
   results.forEach(c=>{
@@ -154,7 +147,6 @@ function remplirClient(n,t){
 window.remplirClient = remplirClient;
 
 // ===================== APPAREILS =====================
-
 let appareils = [];
 function ajouterAppareil(){
   appareils.push({ 
@@ -178,99 +170,25 @@ function afficherAppareils(){
 function supprimerAppareil(i){ appareils.splice(i,1); afficherAppareils(); }
 window.ajouterAppareil = ajouterAppareil;
 
-// ---- MARQUES / SERIES / MODELES ----
-const marquesParType = {
-  "Ordinateur Portable": ["Acer","Asus","HP","Lenovo","Dell","MSI","Samsung","Toshiba","Fujitsu","LG","Autre"],
-  "Ordinateur Fixe": ["Assembler","Acer","Asus","HP","Dell","Lenovo","MSI","Autre"],
-  "Tablette": ["Samsung","Lenovo","Huawei","Microsoft Surface","Autre"],
-  "Disque dur externe": ["Seagate","Western Digital","Toshiba","Samsung","LaCie","Autre"],
-  "Écran": ["Samsung","LG","AOC","Iiyama","Philips","Dell","Asus","Autre"],
-  "Imprimante": ["HP","Canon","Epson","Brother","Lexmark","Samsung","Autre"],
-  "Autre": ["Autre"]
-};
-
-let seriesParMarque = {};
-let modelesParSerie = {};
-
-async function chargerAutoData(){
-  let snapSeries = await getDocs(collection(db,"series"));
-  snapSeries.forEach(d=> seriesParMarque[d.id] = d.data().liste || []);
-
-  let snapModeles = await getDocs(collection(db,"modeles"));
-  snapModeles.forEach(d=> modelesParSerie[d.id] = d.data().liste || []);
-}
-await chargerAutoData();
-
-function majMarques(){
-  marque.innerHTML = "";
-  marquesParType[type.value].forEach(m=> marque.innerHTML += `<option>${m}</option>`);
-  majSeries();
-}
-window.majMarques = majMarques;
-
-function majSeries(){
-  let liste = seriesParMarque[marque.value] || [];
-  if(liste.length === 0){
-    document.getElementById("serie-block").style.display="none";
-  } else {
-    document.getElementById("serie-block").style.display="block";
-    serie.innerHTML = "";
-    liste.forEach(s=> serie.innerHTML += `<option>${s}</option>`);
+// ===================== ACCESSOIRES (AJOUT NOUVEAU) =====================
+function accAucun(el){
+  let checks = document.querySelectorAll('.acc');
+  if(el.checked){
+    checks.forEach(c => { if(c !== el) c.checked = false; });
   }
-  majModeles();
 }
-window.majSeries = majSeries;
-
-function majModeles(){
-  let key = (marque.value || "") + "__" + (serie.value || "");
-  let liste = modelesParSerie[key] || [];
-
-  modele.innerHTML = "";
-  liste.forEach(m=> modele.innerHTML += `<option>${m}</option>`);
-  modele.innerHTML += `<option value="autre">Autre (Saisie manuelle)</option>`;
-}
-window.majModeles = majModeles;
-
-// ✅ Affichage sauvegarde (restauré)
-function toggleSauvegarde(){
-  const v = document.querySelector('input[name="sauv"]:checked')?.value;
-  optionsSauvegarde.style.display = (v === "Oui") ? "block" : "none";
-}
-document.querySelectorAll('input[name="sauv"]').forEach(r=>r.addEventListener("change",toggleSauvegarde));
-toggleSauvegarde();
+window.accAucun = accAucun;
 
 // ===================== ENREGISTREMENT =====================
-async function enregistrer(){
-  let s = serie.value.trim();
-  let m = (modeleAutre.style.display==="block" ? modeleAutre.value.trim() : modele.value.trim());
-  let mk = marque.value;
-
-  if(s){
-    if(!seriesParMarque[mk]) seriesParMarque[mk] = [];
-    if(!seriesParMarque[mk].includes(s)){
-      seriesParMarque[mk].push(s);
-      await setDoc(doc(db,"series",mk), { liste:seriesParMarque[mk] });
-    }
-  }
-
-  let key = mk+"__"+(s || "");
-  if(!modelesParSerie[key]) modelesParSerie[key] = [];
-  if(m && !modelesParSerie[key].includes(m)){
-    modelesParSerie[key].push(m);
-    await setDoc(doc(db,"modeles",key), { liste:modelesParSerie[key] });
-  }
-}
-
 async function creer(){
   if(!nom.value.trim()) return alert("Nom manquant");
   if(!tel.value.trim()) return alert("Téléphone manquant");
   if(appareils.length === 0) return alert("Ajoute au moins un appareil");
 
-  await enregistrer();
-
   let sauvegardeChoix = document.querySelector('input[name="sauv"]:checked')?.value || "Non";
   let sauvItems = [...document.querySelectorAll('input[name="sauv-item"]:checked')].map(c => c.value);
   let travauxSelectionnes = [...document.querySelectorAll('.trav:checked')].map(c => c.value);
+  let accessoires = [...document.querySelectorAll('.acc:checked')].map(c => c.value);
 
   await addDoc(collection(db,"fiches"),{
     nom: nom.value,
@@ -280,6 +198,7 @@ async function creer(){
     sauvegarde: sauvegardeChoix,
     sauvegardeItems: sauvItems,
     travaux: travauxSelectionnes,
+    accessoires: accessoires, // ✅ AJOUTÉ
     motdepasse: mdp.value.trim() || "",
     couleur: couleur.value || "",
     date: new Date().toISOString()
@@ -324,6 +243,19 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.dis
 
 <label>Mot de passe :</label>
 <input id="mdp" class="input">
+
+<!-- ✅ ACCESSOIRES AJOUTÉS ICI -->
+<div class="card-block">
+  <label>Accessoires fournis :</label>
+  <div class="checkbox-group">
+    <label><input type="checkbox" class="acc" value="Chargeur"> Chargeur</label>
+    <label><input type="checkbox" class="acc" value="Sacoche"> Sacoche</label>
+    <label><input type="checkbox" class="acc" value="Souris"> Souris</label>
+    <label><input type="checkbox" class="acc" value="Câble USB / HDMI"> Câble USB / HDMI</label>
+    <label><input type="checkbox" class="acc" value="Aucun" onclick="accAucun(this)"> Aucun</label>
+  </div>
+</div>
+<!-- ✅ FIN -->
 
 <div class="card-block">
 <label>Ajouter un appareil :</label>
