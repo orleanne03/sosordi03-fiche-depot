@@ -60,43 +60,50 @@ function formatTel(){
   tel.value = v.replace(/(..)(?=.)/g,"$1-");
 }
 
-// ✅✅✅ RECHERCHE CORRECTE PAR NOM + PAR DÉBUT DE NUMÉRO ✅✅✅
+
+// ✅✅✅ RECHERCHE FIX NOM + TELEPHONE ✅✅✅
 async function rechercherClient(){
   let input = search.value.trim();
   suggest.innerHTML = "";
+  if(input.length < 2){ suggest.style.display="none"; return; }
 
-  if(input.length < 2){ 
-    suggest.style.display="none"; 
-    return; 
-  }
+  let isNumber = /^\d+$/.test(input.replace(/\D/g,""));
+  let telSearch = input.replace(/\D/g,"");
+  let searchUpper = input.toUpperCase();
 
   let all = await getDocs(collection(db,"clients"));
   let results = [];
 
-  let telSearch = input.replace(/\D/g,"");
+  all.forEach(doc=>{
+    let c = doc.data();
+    let storedTel = (c.tel || "").replace(/\D/g,"");
 
-  // Si utilisateur saisit des chiffres → recherche numéros qui COMMENCENT par ces chiffres
-  if(telSearch.length >= 2){
-    all.forEach(doc=>{
-      let c = doc.data();
-      let stored = (c.tel || "").replace(/\D/g,"");
-      if(stored.startsWith(telSearch)) results.push(c);
-    });
-  } 
-  // Sinon recherche par nom commence par...
-  else {
-    let searchUpper = input.toUpperCase();
-    all.forEach(doc=>{
-      let c = doc.data();
-      if(c.nom && c.nom.toUpperCase().startsWith(searchUpper)) results.push(c);
-    });
-  }
+    // Téléphone → commence par
+    if(isNumber && telSearch.length >= 2 && storedTel.startsWith(telSearch)){
+      results.push(c);
+    }
 
-  if(results.length === 0){
+    // Nom → commence par
+    if(!isNumber && c.nom && c.nom.toUpperCase().startsWith(searchUpper)){
+      results.push(c);
+    }
+  });
+
+  let uniques = [];
+  let seen = new Set();
+  results.forEach(c=>{
+    let key = c.nom+"|"+c.tel;
+    if(!seen.has(key)){
+      seen.add(key);
+      uniques.push(c);
+    }
+  });
+
+  if(uniques.length === 0){
     suggest.innerHTML = `<div class="sug" style="color:#b00;">Aucun résultat</div>
     <button class="primary small-btn" style="width:100%;margin:6px 0;" onclick="ajouterNouveauClient()">➕ Ajouter ce client</button>`;
   } else {
-    results.forEach(c=>{
+    uniques.forEach(c=>{
       suggest.innerHTML += `<div class="sug" onclick='remplirClient(${JSON.stringify(c.nom)}, ${JSON.stringify(c.tel)})'>${c.nom} — ${c.tel}</div>`;
     });
   }
@@ -190,14 +197,20 @@ function majModeles(){
 }
 window.majModeles = majModeles;
 
-document.querySelectorAll('input[name="sauv"]').forEach(r=>{
-  r.addEventListener("change", ()=>{
-    optionsSauvegarde.style.display = (r.value === "Oui") ? "block" : "none";
-  });
+modele.addEventListener("change", ()=>{
+  if(modele.value === "autre"){
+    modeleAutre.style.display="block";
+  } else {
+    modeleAutre.style.display="none";
+  }
 });
 
-// ===================== SAUVEGARDE + VALIDATION =====================
+// ===================== SAUVEGARDE =====================
+document.querySelectorAll('input[name="sauv"]').forEach(r=>{
+  r.onchange = ()=>{ optionsSauvegarde.style.display = (r.value==="Oui")?"block":"none"; };
+});
 
+// ===================== CREATION FICHE =====================
 async function enregistrer(){
   let s = serie.value.trim();
   let m = (modeleAutre.style.display==="block" ? modeleAutre.value.trim() : modele.value.trim());
