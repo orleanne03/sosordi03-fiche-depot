@@ -120,7 +120,20 @@ async function load(){
   snap.forEach(d=>{
     let f = d.data();
 
-    let appareils = f.appareils.map(a=>`• ${a.type} — ${a.marque} ${a.modele}`).join("<br>");
+    let appareils = f.appareils.map(a=>{
+  let acc = "";
+
+  // Accessoires normaux
+  if (a.accessoires?.length) acc += a.accessoires.join(", ");
+
+  // Accessoires autres (texte libre)
+  if (a.accessoiresAutres?.length) acc += (acc ? ", " : "") + a.accessoiresAutres;
+
+  // Si aucun accessoire
+  acc = acc ? ` <br><small>🎒 Accessoires : ${acc}</small>` : "";
+
+  return `• ${a.type} — ${a.marque}${a.serie ? " "+a.serie:""} ${a.modele}${acc}`;
+}).join("<br>");
     let sauv = (f.sauvegarde==="Oui") ? `Oui (${f.sauvegardeItems.join(", ")})` : "Non";
     let travaux = (f.travaux?.length) ? f.travaux.join("<br>") : "Aucun";
     let mdp = f.motdepasse && f.motdepasse.trim() ? f.motdepasse : "Non renseigné";
