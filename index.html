@@ -69,17 +69,17 @@ async function rechercherClient(){
   let all = await getDocs(collection(db,"clients"));
   let results = [];
 
-  // ✅ NUMÉRO : uniquement les numéros qui commencent par ce qui est tapé
+  // ======= SEULE MODIFICATION =======
   let telSearch = input.replace(/\D/g,"");
   if(telSearch.length >= 2){
     all.forEach(doc=>{
       let c = doc.data();
       let stored = (c.tel || "").replace(/\D/g,"");
-      if(stored.startsWith(telSearch)) results.push(c);
+      if(stored.startsWith(telSearch)) results.push(c); // <-- startsWith ici
     });
   }
+  // ==================================
 
-  // ✅ NOM : commence par (inchangé)
   all.forEach(doc=>{
     let c = doc.data();
     if(c.nom && c.nom.toUpperCase().startsWith(searchUpper)) results.push(c);
@@ -194,11 +194,14 @@ function majModeles(){
 }
 window.majModeles = majModeles;
 
+
+// ✅✅✅  CORRECTION TABLETTE / TÉLÉPHONE  ✅✅✅
 document.querySelectorAll('input[name="sauv"]').forEach(r=>{
   r.addEventListener("change", ()=>{
     optionsSauvegarde.style.display = (r.value === "Oui") ? "block" : "none";
   });
 });
+
 
 // ===================== ENREGISTREMENT FICHE =====================
 async function enregistrer(){
@@ -305,9 +308,7 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.dis
 
   <div>
     <label>Modèle :</label>
-
     <select id="modele" class="input" onchange="if(this.value==='autre'){modeleAutre.style.display='block';}else{modeleAutre.style.display='none';}"></select>
-
     <input id="modeleAutre" class="input" placeholder="Saisir modèle" style="display:none;margin-top:6px;">
   </div>
 
