@@ -22,15 +22,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// =============================================================
-// ✅ CHARGEMENT UNIQUE DES CLIENTS (fin du lag)
-// =============================================================
-let clientsCache = [];
-(async ()=>{
-  let snap = await getDocs(collection(db,"clients"));
-  snap.forEach(d => clientsCache.push(d.data()));
-})();
-
 // ===================== CLIENT =====================
 
 async function ajouterNouveauClient(){
@@ -57,11 +48,6 @@ async function ajouterNouveauClient(){
     tel: telSaisi.replace(/(..)(?=.)/g,"$1-")
   });
 
-  clientsCache.push({
-    nom: nomSaisi,
-    tel: telSaisi.replace(/(..)(?=.)/g,"$1-")
-  });
-
   nom.value = nomSaisi;
   tel.value = telSaisi.replace(/(..)(?=.)/g,"$1-");
   suggest.style.display="none";
@@ -74,37 +60,47 @@ function formatTel(){
   tel.value = v.replace(/(..)(?=.)/g,"$1-");
 }
 
-// =============================================================
-// ✅ RECHERCHE TRÈS RAPIDE + NOM OK + TEL OK (≥3 chiffres)
-// =============================================================
 async function rechercherClient(){
   let input = search.value.trim();
   let searchUpper = input.toUpperCase();
-
   suggest.innerHTML = "";
-  if(input.length < 2){
-    suggest.style.display="none";
-    return;
+  if(input.length < 2){ suggest.style.display="none"; return; }
+
+  let all = await getDocs(collection(db,"clients"));
+  let results = [];
+
+  // ✅ Téléphone — recherche au début uniquement
+  let telSearch = input.replace(/\D/g,"");
+  if(telSearch.length >= 2){
+    all.forEach(doc=>{
+      let c = doc.data();
+      let stored = (c.tel || "").replace(/\D/g,"");
+      if(stored.startsWith(telSearch)) results.push(c);
+    });
   }
 
-  let telSearch = input.replace(/\D/g,"");
-
-  let results = clientsCache.filter(c=>{
-    let telClean = (c.tel || "").replace(/\D/g,"");
-    let nomUpper = (c.nom || "").toUpperCase();
-
-    return nomUpper.startsWith(searchUpper)
-        || (telSearch.length >= 3 && telClean.startsWith(telSearch));
+  // ✅ Nom — recherche au début uniquement
+  all.forEach(doc=>{
+    let c = doc.data();
+    if(c.nom && c.nom.toUpperCase().startsWith(searchUpper)) results.push(c);
   });
 
-  if(results.length === 0){
+  let uniques = [];
+  let seen = new Set();
+  results.forEach(c=>{
+    let key = c.nom+"|"+c.tel;
+    if(!seen.has(key)){
+      seen.add(key);
+      uniques.push(c);
+    }
+  });
+
+  if(uniques.length === 0){
     suggest.innerHTML = `<div class="sug" style="color:#b00;">Aucun résultat</div>
     <button class="primary small-btn" style="width:100%;margin:6px 0;" onclick="ajouterNouveauClient()">➕ Ajouter ce client</button>`;
   } else {
-    results.forEach(c=>{
-      suggest.innerHTML += `<div class="sug" onclick='remplirClient(${JSON.stringify(c.nom)}, ${JSON.stringify(c.tel)})'>
-        ${c.nom} — ${c.tel}
-      </div>`;
+    uniques.forEach(c=>{
+      suggest.innerHTML += `<div class="sug" onclick='remplirClient(${JSON.stringify(c.nom)}, ${JSON.stringify(c.tel)})'>${c.nom} — ${c.tel}</div>`;
     });
   }
 
@@ -144,7 +140,7 @@ function afficherAppareils(){
 function supprimerAppareil(i){ appareils.splice(i,1); afficherAppareils(); }
 window.ajouterAppareil = ajouterAppareil;
 
-// ---- MARQUES / SERIES / MODELES ----
+// ---- MARQUES ----
 const marquesParType = {
   "Ordinateur Portable": ["Acer","Asus","HP","Lenovo","Dell","MSI","Samsung","Toshiba","Fujitsu","LG","Autre"],
   "Ordinateur Fixe": ["Assembler","Acer","Asus","HP","Dell","Lenovo","MSI","Autre"],
@@ -155,6 +151,7 @@ const marquesParType = {
   "Autre": ["Autre"]
 };
 
+// ---- SERIES + MODELES ----
 let seriesParMarque = {};
 let modelesParSerie = {};
 
@@ -197,8 +194,17 @@ function majModeles(){
 }
 window.majModeles = majModeles;
 
-// ===================== ENREGISTREMENT =====================
+// ✅ Affichage sauvegarde (corrigé)
+function majAffichageSauvegarde(){
+  const oui = document.querySelector('input[name="sauv"][value="Oui"]');
+  optionsSauvegarde.style.display = oui && oui.checked ? "block" : "none";
+}
+document.querySelectorAll('input[name="sauv"]').forEach(r=>{
+  r.addEventListener("change", majAffichageSauvegarde);
+});
+majAffichageSauvegarde();
 
+// ===================== ENREGISTREMENT =====================
 async function enregistrer(){
   let s = serie.value.trim();
   let m = (modeleAutre.style.display==="block" ? modeleAutre.value.trim() : modele.value.trim());
