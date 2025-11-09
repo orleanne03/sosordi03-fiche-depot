@@ -99,7 +99,6 @@ async function supprimer(id){
   await deleteDoc(doc(db,"fiches",id));
   location.reload();
 }
-window.supprimer = supprimer;
 
 async function saveTarifs(id){
   let estimation = document.getElementById("est_"+id).value.trim();
@@ -114,26 +113,37 @@ async function saveTarifs(id){
 }
 window.saveTarifs = saveTarifs;
 
+function renderAccessoires(f){
+  // Compat : accepte f.accessoires ou f.accessoiresFournis
+  const list = (Array.isArray(f.accessoires) && f.accessoires.length ? f.accessoires
+               : (Array.isArray(f.accessoiresFournis) ? f.accessoiresFournis : []));
+  const autres = (f.accessoiresAutres || f.autresAccessoires || "").trim();
+
+  if((list && list.length) || autres){
+    let html = "";
+    if(list && list.length){
+      html += list.map(x=>"• "+x).join("<br>");
+    }
+    if(autres){
+      if(html) html += "<br>";
+      html += "• Autres : "+autres;
+    }
+    return html.replace(/•/g,"🔹");
+  }
+  return "Aucun";
+}
+
 async function load(){
   let snap = await getDocs(query(collection(db,"fiches"), orderBy("date","desc")));
   let zone = document.getElementById("liste");
 
   snap.forEach(d=>{
     let f = d.data();
-
-    let appareils = f.appareils.map(a=>`🔹 ${a.type} — ${a.marque}${a.serie?" "+a.serie:""} ${a.modele}`).join("<br>");
-
+    let appareils = (f.appareils || []).map(a=>`• ${a.type} — ${a.marque} ${a.modele || ""}`).join("<br>");
+    let sauv = (f.sauvegarde==="Oui") ? `Oui (${(f.sauvegardeItems||[]).join(", ")})` : "Non";
     let travaux = (f.travaux?.length) ? f.travaux.join("<br>") : "Aucun";
-
-    // ✅ Accessoires globaux
-    let accTxt = "";
-    if(f.accessoires?.length) accTxt += f.accessoires.join(", ");
-    if(f.accessoiresAutres && f.accessoiresAutres.trim() !== "") 
-        accTxt += (accTxt ? ", " : "") + f.accessoiresAutres;
-    if(accTxt) accTxt = `<p>🎒 Accessoires fournis : <strong>${accTxt}</strong></p>`;
-
-    let sauv = (f.sauvegarde==="Oui") ? `Oui (${f.sauvegardeItems.join(", ")})` : "Non";
-    let mdp = f.motdepasse?.trim() ? f.motdepasse : "Non renseigné";
+    let mdp = f.motdepasse && f.motdepasse.trim() ? f.motdepasse : "Non renseigné";
+    let accHTML = renderAccessoires(f);
 
     zone.innerHTML += `
 <div class="fiche-card accordion-card">
@@ -150,16 +160,14 @@ async function load(){
     <div class="fiche-date">📅 ${new Date(f.date).toLocaleDateString()}</div>
 
     <p>📞 ${formatTelAffichage(f.tel)}</p>
-    
-    <p>💻 Appareils déposés :<br>${appareils}</p>
-
-    ${accTxt}
-
+    <p>💻<br>${(appareils || "").replace(/•/g,"🔹")}</p>
+    <p>🎒 Accessoires fournis :<br><strong>${accHTML}</strong></p>
     <p>💾 Sauvegarde : <strong>${sauv}</strong></p>
     <p>🔐 Mot de passe : <strong>${mdp}</strong></p>
     <p>🔧 Travaux :<br> <strong>${travaux}</strong></p>
-    <p>📝 ${f.probleme}</p>
+    <p>📝 ${f.probleme || ""}</p>
 
+    <!-- TARIFS -->
     <p>💰 Tarif estimation :<br>
        <input type="text" id="est_${d.id}" class="tarif-input" value="${f.tarifEstimation || ""}">
     </p>
@@ -175,6 +183,7 @@ async function load(){
   });
 }
 
+window.supprimer = supprimer;
 load();
 </script>
 
