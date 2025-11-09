@@ -119,10 +119,16 @@ async function load(){
 
   snap.forEach(d=>{
     let f = d.data();
+
     let appareils = f.appareils.map(a=>`• ${a.type} — ${a.marque} ${a.modele}`).join("<br>");
     let sauv = (f.sauvegarde==="Oui") ? `Oui (${f.sauvegardeItems.join(", ")})` : "Non";
     let travaux = (f.travaux?.length) ? f.travaux.join("<br>") : "Aucun";
     let mdp = f.motdepasse && f.motdepasse.trim() ? f.motdepasse : "Non renseigné";
+
+    // ✅ Accessoires formaté
+    let accessoires = (f.accessoires?.length)
+      ? f.accessoires.join(", ")
+      : "Aucun";
 
     zone.innerHTML += `
 <div class="fiche-card accordion-card">
@@ -139,7 +145,12 @@ async function load(){
     <div class="fiche-date">📅 ${new Date(f.date).toLocaleDateString()}</div>
 
     <p>📞 ${formatTelAffichage(f.tel)}</p>
-    <p>💻<br>${appareils.replace(/•/g,"🔹")}</p>
+
+    <p>💻 Appareils déposés :<br> ${appareils.replace(/•/g,"🔹")}</p>
+
+    <!-- ✅ NOUVEAU : ACCESSOIRES -->
+    <p>🎒 Accessoires fournis : <strong>${accessoires}</strong></p>
+
     <p>💾 Sauvegarde : <strong>${sauv}</strong></p>
     <p>🔐 Mot de passe : <strong>${mdp}</strong></p>
     <p>🔧 Travaux :<br> <strong>${travaux}</strong></p>
