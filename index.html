@@ -23,7 +23,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // =============================================================
-// ✅ CACHE CLIENTS + INDEX TEL
+// ✅ CACHE + INDEX TÉLÉPHONE (ULTRA RAPIDE)
 // =============================================================
 let clientsCache = [];
 let indexTel = {};
@@ -43,6 +43,7 @@ let indexTel = {};
 })();
 
 // ===================== CLIENT =====================
+
 async function ajouterNouveauClient(){
   let nomSaisi = search.value.trim().toUpperCase();
   let telSaisi = tel.value.trim().replace(/\D/g,"");
@@ -90,7 +91,9 @@ function formatTel(){
 }
 
 // =============================================================
-// ✅ RECHERCHE CLIENT
+// ✅ RECHERCHE RAPIDE NOM + TÉLÉPHONE
+// NOM → dès 2 caractères
+// TEL → dès 3 chiffres, via indexTel
 // =============================================================
 function rechercherClient(){
   let input = search.value.trim();
@@ -102,6 +105,7 @@ function rechercherClient(){
 
   let results = [];
 
+  // Recherche téléphone (très rapide)
   if(telSearch.length >= 3){
     let prefix = telSearch.slice(0,3);
     let group = indexTel[prefix] || [];
@@ -111,10 +115,12 @@ function rechercherClient(){
     });
   } 
 
+  // Recherche nom (début uniquement)
   clientsCache.forEach(c=>{
     if(c.nom && c.nom.toUpperCase().startsWith(searchUpper)) results.push(c);
   });
 
+  // Éviter doublons
   let uniques = [];
   let seen = new Set();
   results.forEach(c=>{
@@ -148,56 +154,173 @@ function remplirClient(n,t){
 window.remplirClient = remplirClient;
 
 // ===================== APPAREILS =====================
+
+// ---- MARQUES / SERIES / MODELES ----
+const marquesParType = {
+  "Ordinateur Portable": ["Acer","Asus","HP","Lenovo","Dell","MSI","Samsung","Toshiba","Fujitsu","LG","Autre"],
+  "Ordinateur Fixe": ["Assembler","Acer","Asus","HP","Dell","Lenovo","MSI","Autre"],
+  "Tablette": ["Samsung","Lenovo","Huawei","Microsoft Surface","Autre"],
+  "Disque dur externe": ["Seagate","Western Digital","Toshiba","Samsung","LaCie","Autre"],
+  "Écran": ["Samsung","LG","AOC","Iiyama","Philips","Dell","Asus","Autre"],
+  "Imprimante": ["HP","Canon","Epson","Brother","Lexmark","Samsung","Autre"],
+  "Autre": ["Autre"]
+};
+
+let seriesParMarque = {};
+let modelesParSerie = {};
+
+async function chargerAutoData(){
+  try{
+    let snapSeries = await getDocs(collection(db,"series"));
+    snapSeries.forEach(d=> seriesParMarque[d.id] = d.data().liste || []);
+
+    let snapModeles = await getDocs(collection(db,"modeles"));
+    snapModeles.forEach(d=> modelesParSerie[d.id] = d.data().liste || []);
+  }catch(e){
+    // Si collections absentes, pas bloquant
+    console.warn("AutoData non chargé", e);
+  }
+}
+await chargerAutoData();
+
+// --- état local de l'appareil en cours de saisie ---
 let appareils = [];
+
+function majMarques(){
+  // Remplit la liste des marques selon le type choisi
+  const typeVal = type.value;
+  const liste = marquesParType[typeVal] || [];
+  marque.innerHTML = "";
+  liste.forEach(m=> marque.innerHTML += `<option>${m}</option>`);
+  // Déclenche la mise à jour des séries/modèles
+  majSeries();
+}
+window.majMarques = majMarques;
+
+// ⚙️ Série = <input list="datalistSeries"> (suggestions non bloquantes)
+function majSeries(){
+  // Alimente le datalist des séries d'après la marque choisie
+  const liste = seriesParMarque[marque.value] || [];
+  datalistSeries.innerHTML = ""; // suggestions
+  liste.forEach(s=> datalistSeries.innerHTML += `<option value="${s}">`);
+  // Puis met à jour les modèles en fonction (clé = marque__serie)
+  majModeles();
+}
+window.majSeries = majSeries;
+
+function majModeles(){
+  const mk = marque.value || "";
+  const s = serie.value || "";
+  const key = mk + "__" + s;
+  const liste = modelesParSerie[key] || [];
+  // Remplit le select des modèles (+ option "autre")
+  modele.innerHTML = "";
+  liste.forEach(m=> modele.innerHTML += `<option>${m}</option>`);
+  modele.innerHTML += `<option value="autre">Autre (Saisie manuelle)</option>`;
+  // Affiche/masque le champ "modèle autre"
+  if(modele.value === "autre"){ modeleAutre.style.display="block"; } else { modeleAutre.style.display="none"; }
+}
+window.majModeles = majModeles;
+
 function ajouterAppareil(){
+  const typeVal   = type.value;
+  const marqueVal = marque.value;
+  const serieVal  = (serie.value || "").trim();
+  const modeleVal = (modele.value === "autre" ? (modeleAutre.value || "").trim() : (modele.value || "").trim());
+
+  if(!typeVal)   return alert("Choisis un type d'appareil");
+  if(!marqueVal) return alert("Choisis une marque");
+  if(!modeleVal) return alert("Renseigne le modèle (ou 'Autre')");
+
+  // Accessoires (accordéon sous matériel déposé)
+  const acc = [...document.querySelectorAll('input[name="acc"]:checked')].map(c=>c.value);
+  const accAutre = (accessoiresAutres.value || "").trim();
+
   appareils.push({ 
-    type:type.value, 
-    marque:marque.value, 
-    serie:serie.value || "", 
-    modele:(modeleAutre.style.display==="block" ? modeleAutre.value : modele.value)
+    type: typeVal, 
+    marque: marqueVal, 
+    serie: serieVal, 
+    modele: modeleVal,
+    accessoires: acc,
+    accessoiresAutres: accAutre
   });
+
   afficherAppareils(); 
+
+  // reset champs appareil
   modele.value="";
   modeleAutre.value="";
   serie.value="";
+  accessoiresAutres.value="";
+  document.querySelectorAll('input[name="acc"]').forEach(c=> c.checked=false);
 }
-function afficherAppareils(){
-  listeAppareils.innerHTML = appareils.map((a,i)=>`
-  <div style="padding:6px;border-bottom:1px solid #ccc;">
-    ${a.type} — ${a.marque} ${a.serie ? a.serie+" " : ""}${a.modele}
-    <button class="danger small-btn" onclick="supprimerAppareil(${i})">🗑</button>
-  </div>`).join("");
-}
-function supprimerAppareil(i){ appareils.splice(i,1); afficherAppareils(); }
 window.ajouterAppareil = ajouterAppareil;
 
-// ===================== ACCESSOIRES =====================
-function accAucun(el){
-  let checks = document.querySelectorAll('.acc');
-  if(el.checked){
-    checks.forEach(c => { if(c !== el) c.checked = false; });
+function afficherAppareils(){
+  if(appareils.length === 0){
+    listeAppareils.innerHTML = "";
+    return;
   }
+  listeAppareils.innerHTML = appareils.map((a,i)=>{
+    const accTxt = (a.accessoires?.length || a.accessoiresAutres)
+      ? ` <br><small>🎒 Accessoires : ${(a.accessoires||[]).join(", ")}${a.accessoiresAutres? (a.accessoires?.length? ", ":"") + a.accessoiresAutres : ""}</small>`
+      : "";
+    return `
+    <div style="padding:6px;border-bottom:1px solid #dce3eb;">
+      ${a.type} — ${a.marque}${a.serie ? " "+a.serie:""} ${a.modele}
+      ${accTxt}
+      <button class="danger small-btn" style="float:right" onclick="supprimerAppareil(${i})">🗑</button>
+      <div style="clear:both"></div>
+    </div>`;
+  }).join("");
 }
-window.accAucun = accAucun;
+function supprimerAppareil(i){ appareils.splice(i,1); afficherAppareils(); }
+window.supprimerAppareil = supprimerAppareil;
 
-// ===================== SAUVEGARDE =====================
+// ✅ Affichage sauvegarde (restauré)
 function toggleSauvegarde(){
   const v = document.querySelector('input[name="sauv"]:checked')?.value;
   optionsSauvegarde.style.display = (v === "Oui") ? "block" : "none";
 }
-document.querySelectorAll('input[name="sauv"]').forEach(r=>r.addEventListener("change",toggleSauvegarde));
+document.addEventListener("change", e=>{
+  if(e.target.name === "sauv") toggleSauvegarde();
+});
 toggleSauvegarde();
 
 // ===================== ENREGISTREMENT =====================
+async function enregistrer(){
+  let s = (serie.value || "").trim();
+  let m = (modele.value === "autre" ? (modeleAutre.value || "").trim() : (modele.value || "").trim());
+  let mk = marque.value;
+
+  // Mémorise la série par marque
+  if(s){
+    if(!seriesParMarque[mk]) seriesParMarque[mk] = [];
+    if(!seriesParMarque[mk].includes(s)){
+      seriesParMarque[mk].push(s);
+      await setDoc(doc(db,"series",mk), { liste:seriesParMarque[mk] });
+    }
+  }
+
+  // Mémorise le modèle par (marque__série)
+  let key = mk+"__"+(s || "");
+  if(!modelesParSerie[key]) modelesParSerie[key] = [];
+  if(m && !modelesParSerie[key].includes(m)){
+    modelesParSerie[key].push(m);
+    await setDoc(doc(db,"modeles",key), { liste:modelesParSerie[key] });
+  }
+}
+
 async function creer(){
   if(!nom.value.trim()) return alert("Nom manquant");
   if(!tel.value.trim()) return alert("Téléphone manquant");
   if(appareils.length === 0) return alert("Ajoute au moins un appareil");
 
+  await enregistrer();
+
   let sauvegardeChoix = document.querySelector('input[name="sauv"]:checked')?.value || "Non";
   let sauvItems = [...document.querySelectorAll('input[name="sauv-item"]:checked')].map(c => c.value);
   let travauxSelectionnes = [...document.querySelectorAll('.trav:checked')].map(c => c.value);
-  let accessoires = [...document.querySelectorAll('.acc:checked')].map(c => c.value);
 
   await addDoc(collection(db,"fiches"),{
     nom: nom.value,
@@ -207,7 +330,6 @@ async function creer(){
     sauvegarde: sauvegardeChoix,
     sauvegardeItems: sauvItems,
     travaux: travauxSelectionnes,
-    accessoires: accessoires,
     motdepasse: mdp.value.trim() || "",
     couleur: couleur.value || "",
     date: new Date().toISOString()
@@ -217,17 +339,13 @@ async function creer(){
 }
 window.creer = creer;
 
+// UX : fermer les suggestions
 document.addEventListener("click", e=>{ if(!e.target.closest("#search") && !e.target.closest("#suggest")) suggest.style.display="none"; });
 search.addEventListener("input", ()=>{ if(search.value.trim().length < 2) suggest.style.display="none"; });
 document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.display="none"; });
-</script>
 
-<style>
-.arrow { float:right; transition:0.2s; }
-.accordion.open .arrow { transform:rotate(-90deg); }
-.accordion-content { display:none; padding:8px 0; }
-.accordion.open .accordion-content { display:block; }
-</style>
+// Initialisation : rien à faire ici, l’utilisateur choisit d’abord un type
+</script>
 
 </head>
 <body>
@@ -240,45 +358,54 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.dis
 
 <div class="card">
 
-<label>Nom du client :</label>
-<input id="nom" class="input">
+  <label for="nom">Nom du client :</label>
+  <input id="nom" class="input">
 
-<label>Téléphone :</label>
-<input id="tel" class="input" maxlength="14" oninput="formatTel();">
+  <label for="tel">Téléphone :</label>
+  <input id="tel" class="input" maxlength="14" oninput="formatTel();">
 
-<label>Couleur :</label>
-<select id="couleur" class="input">
-  <option value="">Aucune</option>
-  <option value="red">Rouge</option>
-  <option value="blue">Bleu</option>
-  <option value="green">Vert</option>
-  <option value="yellow">Jaune</option>
-  <option value="orange">Orange</option>
-</select>
+  <label for="couleur">Couleur :</label>
+  <select id="couleur" class="input">
+    <option value="">Aucune</option>
+    <option value="red">Rouge</option>
+    <option value="blue">Bleu</option>
+    <option value="green">Vert</option>
+    <option value="yellow">Jaune</option>
+    <option value="orange">Orange</option>
+  </select>
 
-<label>Mot de passe :</label>
-<input id="mdp" class="input">
+  <label for="mdp">Mot de passe :</label>
+  <input id="mdp" class="input">
 
-<!-- ✅ ACCORDÉON MATÉRIEL DÉPOSÉ -->
-<div class="accordion">
-  <div class="accordion-header" onclick="toggleAccordion(this)">
-    Matériel déposé :
-    <span class="arrow">▼</span>
-  </div>
-  <div class="accordion-content">
+  <!-- ===================== MATÉRIEL DÉPOSÉ ===================== -->
+  <div class="card-block">
+    <label>Ajouter un appareil :</label>
 
     <div class="grid-3">
-      <div><label>Type :</label><select id="type" class="input" onchange="majMarques()">
-        <option value="" selected disabled>-- Choisir un type --</option>
-        <option>Ordinateur Portable</option><option>Ordinateur Fixe</option><option>Tablette</option>
-        <option>Disque dur externe</option><option>Écran</option><option>Imprimante</option><option>Autre</option>
-      </select></div>
+      <div>
+        <label>Type :</label>
+        <select id="type" class="input" onchange="majMarques()">
+          <option value="" selected disabled>-- Choisir un type --</option>
+          <option>Ordinateur Portable</option>
+          <option>Ordinateur Fixe</option>
+          <option>Tablette</option>
+          <option>Disque dur externe</option>
+          <option>Écran</option>
+          <option>Imprimante</option>
+          <option>Autre</option>
+        </select>
+      </div>
 
-      <div><label>Marque :</label><select id="marque" class="input" onchange="majSeries()"></select></div>
+      <div>
+        <label>Marque :</label>
+        <select id="marque" class="input" onchange="majSeries()"></select>
+      </div>
 
-      <div id="serie-block" style="display:none;">
+      <div id="serie-block">
         <label>Série :</label>
-        <input id="serie" class="input" placeholder="Saisir ou choisir">
+        <!-- input avec datalist = suggestions -->
+        <input id="serie" class="input" placeholder="Saisir ou choisir" list="datalistSeries" oninput="majModeles()">
+        <datalist id="datalistSeries"></datalist>
       </div>
 
       <div>
@@ -286,70 +413,74 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.dis
         <select id="modele" class="input" onchange="if(this.value==='autre'){modeleAutre.style.display='block';}else{modeleAutre.style.display='none';}"></select>
         <input id="modeleAutre" class="input" placeholder="Saisir modèle" style="display:none;margin-top:6px;">
       </div>
-
     </div>
 
-    <button class="secondary small-btn" onclick="ajouterAppareil()">➕</button>
+    <!-- Accessoires remis (SOUS Matériel déposé) -->
+    <div class="accordion" style="margin-top:12px;">
+      <div class="accordion-header" onclick="this.parentNode.classList.toggle('open')">
+        Accessoires remis (chargeur, sacoche…)
+        <span class="arrow">▼</span>
+      </div>
+      <div class="accordion-content">
+        <div class="checkbox-group">
+          <label><input type="checkbox" name="acc" value="Chargeur"> Chargeur</label>
+          <label><input type="checkbox" name="acc" value="Câble secteur"> Câble secteur</label>
+          <label><input type="checkbox" name="acc" value="Sacoche"> Sacoche</label>
+          <label><input type="checkbox" name="acc" value="Dongle USB"> Dongle USB</label>
+          <label><input type="checkbox" name="acc" value="Clé USB"> Clé USB</label>
+          <label><input type="checkbox" name="acc" value="Batterie amovible"> Batterie amovible</label>
+          <label><input type="checkbox" name="acc" value="Autre"> Autre</label>
+        </div>
+        <input id="accessoiresAutres" class="input" placeholder="Précisions / autres accessoires (optionnel)" style="margin-top:8px;">
+      </div>
+    </div>
+
+    <button class="secondary small-btn" onclick="ajouterAppareil()">➕ Ajouter cet appareil</button>
     <div id="listeAppareils"></div>
-
-  </div>
-</div>
-
-<!-- ✅ ACCORDÉON ACCESSOIRES -->
-<div class="accordion">
-  <div class="accordion-header" onclick="toggleAccordion(this)">
-    Accessoires fournis :
-    <span class="arrow">▼</span>
-  </div>
-  <div class="accordion-content">
-    <label><input type="checkbox" class="acc" value="Chargeur"> Chargeur</label><br>
-    <label><input type="checkbox" class="acc" value="Sacoche"> Sacoche</label><br>
-    <label><input type="checkbox" class="acc" value="Souris"> Souris</label><br>
-    <label><input type="checkbox" class="acc" value="Câble USB / HDMI"> Câble USB / HDMI</label><br>
-    <label><input type="checkbox" class="acc" value="Aucun" onclick="accAucun(this)"> Aucun</label><br>
-  </div>
-</div>
-
-<!-- ✅ SAUVEGARDE REMISE -->
-<div class="card-block">
-<label>Sauvegarde :</label><br>
-<input type="radio" name="sauv" value="Non" checked> Non
-<input type="radio" name="sauv" value="Oui"> Oui
-
-<div id="optionsSauvegarde" style="display:none;margin-top:6px;">
-  <label><input type="checkbox" name="sauv-item" value="Documents"> Documents</label><br>
-  <label><input type="checkbox" name="sauv-item" value="Images"> Images</label><br>
-  <label><input type="checkbox" name="sauv-item" value="Vidéos"> Vidéos</label><br>
-  <label><input type="checkbox" name="sauv-item" value="Favoris"> Favoris</label><br>
-  <label><input type="checkbox" name="sauv-item" value="Mots de passe"> Mots de passe</label><br>
-</div>
-</div>
-
-<!-- ✅ TRAVAUX -->
-<div class="accordion">
-  <div class="accordion-header" onclick="toggleAccordion(this)">
-    Travaux à réaliser :
-    <span class="arrow">▼</span>
   </div>
 
-  <div class="accordion-content">
-    <div class="checkbox-group">
-      <label><input type="checkbox" class="trav" value="Migration Windows 11"> Migration Windows 11</label>
-      <label><input type="checkbox" class="trav" value="Réinstallation complète Windows"> Réinstallation complète Windows</label>
-      <label><input type="checkbox" class="trav" value="Nettoyage système + Optimisation"> Nettoyage + Optimisation</label>
-      <label><input type="checkbox" class="trav" value="Suppression virus / malwares"> Suppression virus / malwares</label>
-      <label><input type="checkbox" class="trav" value="Installation SSD + clonage"> Installation SSD + clonage</label>
-      <label><input type="checkbox" class="trav" value="Sauvegarde + Restauration"> Sauvegarde + Restauration</label>
-      <label><input type="checkbox" class="trav" value="Ajout / Changement RAM"> Ajout / Changement RAM</label>
-      <label><input type="checkbox" class="trav" value="Autre"> Autre…</label>
+  <!-- ===================== SAUVEGARDE ===================== -->
+  <div class="card-block">
+    <label>Sauvegarde :</label>
+    <div class="radio-group" style="margin-top:6px;">
+      <label><input type="radio" name="sauv" value="Non" checked> Non</label>
+      <label><input type="radio" name="sauv" value="Oui"> Oui</label>
+    </div>
+
+    <div id="optionsSauvegarde" style="display:none;margin-top:6px;">
+      <label><input type="checkbox" name="sauv-item" value="Documents"> Documents</label><br>
+      <label><input type="checkbox" name="sauv-item" value="Images"> Images</label><br>
+      <label><input type="checkbox" name="sauv-item" value="Vidéos"> Vidéos</label><br>
+      <label><input type="checkbox" name="sauv-item" value="Favoris"> Favoris</label><br>
+      <label><input type="checkbox" name="sauv-item" value="Mots de passe"> Mots de passe</label><br>
     </div>
   </div>
-</div>
 
-<label>Description du problème :</label>
-<textarea id="prob" class="textarea" rows="4"></textarea>
+  <!-- ===================== TRAVAUX ===================== -->
+  <div class="accordion">
+    <div class="accordion-header" onclick="toggleAccordion(this)">
+      Travaux à réaliser :
+      <span class="arrow">▼</span>
+    </div>
 
-<button class="primary" onclick="creer()">Créer la fiche</button>
+    <div class="accordion-content">
+      <div class="checkbox-group">
+        <label><input type="checkbox" class="trav" value="Migration Windows 11"> Migration Windows 11</label>
+        <label><input type="checkbox" class="trav" value="Réinstallation complète Windows"> Réinstallation complète Windows</label>
+        <label><input type="checkbox" class="trav" value="Nettoyage système + Optimisation"> Nettoyage + Optimisation</label>
+        <label><input type="checkbox" class="trav" value="Suppression virus / malwares"> Suppression virus / malwares</label>
+        <label><input type="checkbox" class="trav" value="Installation SSD + clonage"> Installation SSD + clonage</label>
+        <label><input type="checkbox" class="trav" value="Sauvegarde + Restauration"> Sauvegarde + Restauration</label>
+        <label><input type="checkbox" class="trav" value="Ajout / Changement RAM"> Ajout / Changement RAM</label>
+        <label><input type="checkbox" class="trav" value="Autre"> Autre…</label>
+      </div>
+    </div>
+  </div>
+
+  <label for="prob">Description du problème :</label>
+  <textarea id="prob" class="textarea" rows="4"></textarea>
+
+  <button class="primary" onclick="creer()">Créer la fiche</button>
 
 </div>
 
