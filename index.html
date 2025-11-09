@@ -60,47 +60,43 @@ function formatTel(){
   tel.value = v.replace(/(..)(?=.)/g,"$1-");
 }
 
+// ✅ VERSION DEMANDÉE : recherche uniquement au DÉBUT
 async function rechercherClient(){
   let input = search.value.trim();
   let searchUpper = input.toUpperCase();
   suggest.innerHTML = "";
-  if(input.length < 2){ suggest.style.display="none"; return; }
 
+  if(input.length < 2){
+    suggest.style.display="none";
+    return;
+  }
+
+  let telSearch = input.replace(/\D/g,"");
   let all = await getDocs(collection(db,"clients"));
   let results = [];
 
-  // ✅ Téléphone — seule ligne modifiée
-  let telSearch = input.replace(/\D/g,"");
-  if(telSearch.length >= 2){
-    all.forEach(doc=>{
-      let c = doc.data();
-      let stored = (c.tel || "").replace(/\D/g,"");
-      if(stored.startsWith(telSearch)) results.push(c); // ✅ MODIFICATION
-    });
-  }
-
-  // ✅ Nom — inchangé
   all.forEach(doc=>{
     let c = doc.data();
-    if(c.nom && c.nom.toUpperCase().startsWith(searchUpper)) results.push(c);
-  });
+    let telClean = (c.tel || "").replace(/\D/g,"");
+    let nomUpper = (c.nom || "").toUpperCase();
 
-  let uniques = [];
-  let seen = new Set();
-  results.forEach(c=>{
-    let key = c.nom+"|"+c.tel;
-    if(!seen.has(key)){
-      seen.add(key);
-      uniques.push(c);
+    if(nomUpper.startsWith(searchUpper) || telClean.startsWith(telSearch)){
+      results.push(c);
     }
   });
 
-  if(uniques.length === 0){
-    suggest.innerHTML = `<div class="sug" style="color:#b00;">Aucun résultat</div>
-    <button class="primary small-btn" style="width:100%;margin:6px 0;" onclick="ajouterNouveauClient()">➕ Ajouter ce client</button>`;
+  if(results.length === 0){
+    suggest.innerHTML = `
+      <div class="sug" style="color:#b00;">Aucun résultat</div>
+      <button class="primary small-btn" style="width:100%;margin:6px 0;" onclick="ajouterNouveauClient()">
+        ➕ Ajouter ce client
+      </button>`;
   } else {
-    uniques.forEach(c=>{
-      suggest.innerHTML += `<div class="sug" onclick='remplirClient(${JSON.stringify(c.nom)}, ${JSON.stringify(c.tel)})'>${c.nom} — ${c.tel}</div>`;
+    results.forEach(c=>{
+      suggest.innerHTML += `
+        <div class="sug" onclick='remplirClient(${JSON.stringify(c.nom)}, ${JSON.stringify(c.tel)})'>
+          ${c.nom} — ${c.tel}
+        </div>`;
     });
   }
 
