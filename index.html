@@ -22,7 +22,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// ========= CLIENT CACHE =========
+// =============================================================
+// ✅ CACHE + INDEX TÉLÉPHONE (ULTRA RAPIDE)
+// =============================================================
 let clientsCache = [];
 let indexTel = {};
 
@@ -31,186 +33,269 @@ let indexTel = {};
   snap.forEach(d=>{
     let c = d.data();
     clientsCache.push(c);
-    let tel = (c.tel||"").replace(/\D/g,"");
+    let tel = (c.tel || "").replace(/\D/g,"");
     let prefix = tel.slice(0,3);
     if(prefix){
-      if(!indexTel[prefix]) indexTel[prefix]=[];
+      if(!indexTel[prefix]) indexTel[prefix] = [];
       indexTel[prefix].push(c);
     }
   });
 })();
 
-// ========= RECHERCHE CLIENT =========
-
-function rechercherClient(){
-  let input = search.value.trim();
-  let sU = input.toUpperCase();
-  let telSearch = input.replace(/\D/g,"");
-
-  suggest.innerHTML="";
-  if(input.length < 2){ suggest.style.display="none"; return; }
-
-  let res=[];
-
-  if(telSearch.length >= 3){
-    let prefix = telSearch.slice(0,3);
-    let group = indexTel[prefix]||[];
-    res = group.filter(c=>{
-      let t = (c.tel||"").replace(/\D/g,"");
-      return t.startsWith(telSearch);
-    });
-  }
-
-  clientsCache.forEach(c=>{
-    if(c.nom && c.nom.toUpperCase().startsWith(sU)) res.push(c);
-  });
-
-  let uniques=[];
-  let seen=new Set();
-  res.forEach(c=>{
-    let k=c.nom+"|"+c.tel;
-    if(!seen.has(k)){ seen.add(k); uniques.push(c);}
-  });
-
-  if(uniques.length===0){
-    suggest.innerHTML=`<div class="sug" style="color:#b00;">Aucun résultat</div>
-    <button class="primary small-btn" style="width:100%;margin:6px 0;" onclick="ajouterNouveauClient()">➕ Ajouter ce client</button>`;
-  } else {
-    uniques.forEach(c=>{
-      suggest.innerHTML+=`<div class="sug" onclick='remplirClient(${JSON.stringify(c.nom)},${JSON.stringify(c.tel)})'>
-      ${c.nom} — ${c.tel}
-      </div>`;
-    });
-  }
-
-  suggest.style.display="block";
-}
-window.rechercherClient = rechercherClient;
-
-function remplirClient(n,t){
-  nom.value=n;
-  tel.value=t;
-  suggest.style.display="none";
-}
-window.remplirClient = remplirClient;
+// ===================== CLIENT =====================
 
 async function ajouterNouveauClient(){
-  let n = search.value.trim().toUpperCase();
-  let t = tel.value.trim().replace(/\D/g,"");
-  if(!n) return alert("Nom vide.");
-  if(!t) return alert("Téléphone manquant.");
+  let nomSaisi = search.value.trim().toUpperCase();
+  let telSaisi = tel.value.trim().replace(/\D/g,"");
+  if(!nomSaisi) return alert("Nom vide.");
+  if(!telSaisi) return alert("Téléphone manquant.");
 
   let snap = await getDocs(collection(db,"clients"));
   for(let d of snap.docs){
-    let c=d.data();
-    let telC=(c.tel||"").replace(/\D/g,"");
-    if(c.nom===n || telC===t){
-      nom.value=n;
-      tel.value=t.replace(/(..)(?=.)/g,"$1-");
+    let c = d.data();
+    let telClient = (c.tel || "").replace(/\D/g,"");
+    if(c.nom === nomSaisi || telClient === telSaisi){
+      nom.value = nomSaisi;
+      tel.value = telSaisi.replace(/(..)(?=.)/g,"$1-");
       suggest.style.display="none";
       alert("⚠️ Ce client existe déjà !");
       return;
     }
   }
 
-  let tF = t.replace(/(..)(?=.)/g,"$1-");
-  await addDoc(collection(db,"clients"),{nom:n,tel:tF});
-  clientsCache.push({nom:n,tel:tF});
+  let telFormate = telSaisi.replace(/(..)(?=.)/g,"$1-");
 
-  let prefix=t.slice(0,3);
+  await addDoc(collection(db,"clients"),{
+    nom: nomSaisi,
+    tel: telFormate
+  });
+
+  clientsCache.push({ nom: nomSaisi, tel: telFormate });
+
+  let prefix = telSaisi.slice(0,3);
   if(prefix){
-    if(!indexTel[prefix]) indexTel[prefix]=[];
-    indexTel[prefix].push({nom:n,tel:tF});
+    if(!indexTel[prefix]) indexTel[prefix] = [];
+    indexTel[prefix].push({ nom: nomSaisi, tel: telFormate });
   }
 
-  nom.value=n;
-  tel.value=tF;
+  nom.value = nomSaisi;
+  tel.value = telFormate;
   suggest.style.display="none";
   alert("✅ Client ajouté !");
 }
 window.ajouterNouveauClient = ajouterNouveauClient;
 
 function formatTel(){
-  let v=tel.value.replace(/\D/g,"").slice(0,10);
-  tel.value=v.replace(/(..)(?=.)/g,"$1-");
+  let v = tel.value.replace(/\D/g,"").slice(0,10);
+  tel.value = v.replace(/(..)(?=.)/g,"$1-");
 }
 
-// ========= APPAREILS =========
-let appareils=[];
+// =============================================================
+// ✅ RECHERCHE RAPIDE NOM + TÉLÉPHONE
+// NOM → dès 2 caractères
+// TEL → dès 3 chiffres, via indexTel
+// =============================================================
+function rechercherClient(){
+  let input = search.value.trim();
+  let searchUpper = input.toUpperCase();
+  let telSearch = input.replace(/\D/g,"");
 
-function ajouterAppareil(){
-  appareils.push({
-    type:type.value,
-    marque:marque.value,
-    serie:serie.value||"",
-    modele:(modeleAutre.style.display==="block"?modeleAutre.value:modele.value)||""
+  suggest.innerHTML = "";
+  if(input.length < 2){ suggest.style.display="none"; return; }
+
+  let results = [];
+
+  // Recherche téléphone (très rapide)
+  if(telSearch.length >= 3){
+    let prefix = telSearch.slice(0,3);
+    let group = indexTel[prefix] || [];
+    results = group.filter(c=>{
+      let telClean = (c.tel || "").replace(/\D/g,"");
+      return telClean.startsWith(telSearch);
+    });
+  } 
+
+  // Recherche nom (début uniquement)
+  clientsCache.forEach(c=>{
+    if(c.nom && c.nom.toUpperCase().startsWith(searchUpper)) results.push(c);
   });
-  afficherAppareils();
-  serie.value="";
+
+  // Éviter doublons
+  let uniques = [];
+  let seen = new Set();
+  results.forEach(c=>{
+    let key = c.nom+"|"+c.tel;
+    if(!seen.has(key)){
+      seen.add(key);
+      uniques.push(c);
+    }
+  });
+
+  if(uniques.length === 0){
+    suggest.innerHTML = `<div class="sug" style="color:#b00;">Aucun résultat</div>
+    <button class="primary small-btn" style="width:100%;margin:6px 0;" onclick="ajouterNouveauClient()">➕ Ajouter ce client</button>`;
+  } else {
+    uniques.forEach(c=>{
+      suggest.innerHTML += `<div class="sug" onclick='remplirClient(${JSON.stringify(c.nom)}, ${JSON.stringify(c.tel)})'>
+        ${c.nom} — ${c.tel}
+      </div>`;
+    });
+  }
+
+  suggest.style.display = "block";
+}
+window.rechercherClient = rechercherClient;
+
+function remplirClient(n,t){
+  nom.value = n;
+  tel.value = t;
+  suggest.style.display = "none";
+}
+window.remplirClient = remplirClient;
+
+// ===================== APPAREILS =====================
+
+let appareils = [];
+function ajouterAppareil(){
+  appareils.push({ 
+    type:type.value, 
+    marque:marque.value, 
+    serie:serie.value || "", 
+    modele:(modeleAutre.style.display==="block" ? modeleAutre.value : modele.value)
+  });
+  afficherAppareils(); 
   modele.value="";
   modeleAutre.value="";
+  serie.value="";
 }
-window.ajouterAppareil = ajouterAppareil;
-
 function afficherAppareils(){
   listeAppareils.innerHTML = appareils.map((a,i)=>`
   <div style="padding:6px;border-bottom:1px solid #ccc;">
-    ${a.type} — ${a.marque} ${a.serie?" "+a.serie:""} ${a.modele}
+    ${a.type} — ${a.marque} ${a.serie ? a.serie+" " : ""}${a.modele}
     <button class="danger small-btn" onclick="supprimerAppareil(${i})">🗑</button>
   </div>`).join("");
 }
 function supprimerAppareil(i){ appareils.splice(i,1); afficherAppareils(); }
-window.supprimerAppareil = supprimerAppareil;
+window.ajouterAppareil = ajouterAppareil;
 
-// ========= ACCESSOIRES (GLOBAL) =========
-let accessoires = [];
+// ---- MARQUES / SERIES / MODELES ----
+const marquesParType = {
+  "Ordinateur Portable": ["Acer","Asus","HP","Lenovo","Dell","MSI","Samsung","Toshiba","Fujitsu","LG","Autre"],
+  "Ordinateur Fixe": ["Assembler","Acer","Asus","HP","Dell","Lenovo","MSI","Autre"],
+  "Tablette": ["Samsung","Lenovo","Huawei","Microsoft Surface","Autre"],
+  "Disque dur externe": ["Seagate","Western Digital","Toshiba","Samsung","LaCie","Autre"],
+  "Écran": ["Samsung","LG","AOC","Iiyama","Philips","Dell","Asus","Autre"],
+  "Imprimante": ["HP","Canon","Epson","Brother","Lexmark","Samsung","Autre"],
+  "Autre": ["Autre"]
+};
 
-function toggleAcc(el){
-  let val = el.value;
-  if(el.checked){
-    accessoires.push(val);
+let seriesParMarque = {};
+let modelesParSerie = {};
+
+async function chargerAutoData(){
+  let snapSeries = await getDocs(collection(db,"series"));
+  snapSeries.forEach(d=> seriesParMarque[d.id] = d.data().liste || []);
+
+  let snapModeles = await getDocs(collection(db,"modeles"));
+  snapModeles.forEach(d=> modelesParSerie[d.id] = d.data().liste || []);
+}
+await chargerAutoData();
+
+function majMarques(){
+  // Remplit la liste des marques selon le type
+  marque.innerHTML = "";
+  const liste = marquesParType[type.value] || [];
+  liste.forEach(m=> marque.innerHTML += `<option>${m}</option>`);
+  majSeries();
+}
+window.majMarques = majMarques;
+
+function majSeries(){
+  // Affiche/alimente le SELECT série
+  let liste = seriesParMarque[marque.value] || [];
+  if(liste.length === 0){
+    document.getElementById("serie-block").style.display="none";
+    serie.innerHTML = ""; // propre
   } else {
-    accessoires = accessoires.filter(v=>v!==val);
+    document.getElementById("serie-block").style.display="block";
+    serie.innerHTML = "";
+    liste.forEach(s=> serie.innerHTML += `<option>${s}</option>`);
   }
+  majModeles();
 }
+window.majSeries = majSeries;
 
-function setAutres(){
-  autres.value = autres.value.trim();
+function majModeles(){
+  let key = (marque.value || "") + "__" + (serie.value || "");
+  let liste = modelesParSerie[key] || [];
+  modele.innerHTML = "";
+  liste.forEach(m=> modele.innerHTML += `<option>${m}</option>`);
+  modele.innerHTML += `<option value="autre">Autre (Saisie manuelle)</option>`;
 }
-window.toggleAcc = toggleAcc;
-window.setAutres = setAutres;
+window.majModeles = majModeles;
 
-// ========= SAUVEGARDE =========
+// ✅ Affichage sauvegarde (restauré)
 function toggleSauvegarde(){
   const v = document.querySelector('input[name="sauv"]:checked')?.value;
-  optionsSauvegarde.style.display = (v==="Oui")?"block":"none";
+  optionsSauvegarde.style.display = (v === "Oui") ? "block" : "none";
 }
 document.querySelectorAll('input[name="sauv"]').forEach(r=>r.addEventListener("change",toggleSauvegarde));
 toggleSauvegarde();
 
-// ========= ENREGISTRER =========
-async function creer(){
-  if(!nom.value.trim()) return alert("Nom ?");
-  if(!tel.value.trim()) return alert("Téléphone ?");
-  if(appareils.length===0) return alert("Ajoute au moins un appareil");
+// ===================== ENREGISTREMENT =====================
+async function enregistrer(){
+  // Enregistrer dynamiquement séries / modèles saisis
+  let s = (serie.value || "").trim();
+  let m = (modeleAutre.style.display==="block" ? (modeleAutre.value || "").trim() : (modele.value || "").trim());
+  let mk = marque.value;
 
+  if(s){
+    if(!seriesParMarque[mk]) seriesParMarque[mk] = [];
+    if(!seriesParMarque[mk].includes(s)){
+      seriesParMarque[mk].push(s);
+      await setDoc(doc(db,"series",mk), { liste:seriesParMarque[mk] });
+    }
+  }
+
+  let key = mk+"__"+(s || "");
+  if(!modelesParSerie[key]) modelesParSerie[key] = [];
+  if(m && !modelesParSerie[key].includes(m)){
+    modelesParSerie[key].push(m);
+    await setDoc(doc(db,"modeles",key), { liste:modelesParSerie[key] });
+  }
+}
+
+async function creer(){
+  if(!nom.value.trim()) return alert("Nom manquant");
+  if(!tel.value.trim()) return alert("Téléphone manquant");
+  if(appareils.length === 0) return alert("Ajoute au moins un appareil");
+
+  await enregistrer();
+
+  // Sauvegarde
   let sauvegardeChoix = document.querySelector('input[name="sauv"]:checked')?.value || "Non";
-  let sauvItems = [...document.querySelectorAll('input[name="sauv-item"]:checked')].map(c=>c.value);
-  let travaux = [...document.querySelectorAll('.trav:checked')].map(c=>c.value);
-  let accessoiresAutres = autres.value.trim() || "";
+  let sauvItems = [...document.querySelectorAll('input[name="sauv-item"]:checked')].map(c => c.value);
+
+  // Travaux
+  let travauxSelectionnes = [...document.querySelectorAll('.trav:checked')].map(c => c.value);
+
+  // ✅ Accessoires (globaux, un seul bloc)
+  let accessoiresSelectionnes = [...document.querySelectorAll('input[name="acc"]:checked')].map(c => c.value);
+  let accessoiresAutres = (accAutres.value || "").trim();
 
   await addDoc(collection(db,"fiches"),{
     nom: nom.value,
     tel: tel.value,
     appareils: appareils,
+    probleme: prob.value,
     sauvegarde: sauvegardeChoix,
     sauvegardeItems: sauvItems,
-    travaux: travaux,
-    accessoires: accessoires,
+    travaux: travauxSelectionnes,
+    // ✅ Accessoires enregistrés
+    accessoires: accessoiresSelectionnes,
     accessoiresAutres: accessoiresAutres,
-    probleme: prob.value,
-    motdepasse: mdp.value.trim()||"",
-    couleur: couleur.value||"",
+    motdepasse: mdp.value.trim() || "",
+    couleur: couleur.value || "",
     date: new Date().toISOString()
   });
 
@@ -218,13 +303,16 @@ async function creer(){
 }
 window.creer = creer;
 
-document.addEventListener("click",e=>{ if(!e.target.closest("#search")&&!e.target.closest("#suggest")) suggest.style.display="none"; });
+document.addEventListener("click", e=>{ if(!e.target.closest("#search") && !e.target.closest("#suggest")) suggest.style.display="none"; });
+search.addEventListener("input", ()=>{ if(search.value.trim().length < 2) suggest.style.display="none"; });
+document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.display="none"; });
+
 </script>
+
 </head>
-
 <body>
-<div class="container">
 
+<div class="container">
 <h1>🖥️ Fiche de Dépôt</h1>
 
 <input type="text" id="search" class="input" placeholder="🔍 Rechercher un client..." oninput="rechercherClient()">
@@ -232,13 +320,13 @@ document.addEventListener("click",e=>{ if(!e.target.closest("#search")&&!e.targe
 
 <div class="card">
 
-<label>Nom du client :</label>
+<label for="nom">Nom du client :</label>
 <input id="nom" class="input">
 
-<label>Téléphone :</label>
-<input id="tel" class="input" oninput="formatTel();">
+<label for="tel">Téléphone :</label>
+<input id="tel" class="input" maxlength="14" oninput="formatTel();">
 
-<label>Couleur :</label>
+<label for="couleur">Couleur :</label>
 <select id="couleur" class="input">
   <option value="">Aucune</option>
   <option value="red">Rouge</option>
@@ -248,66 +336,81 @@ document.addEventListener("click",e=>{ if(!e.target.closest("#search")&&!e.targe
   <option value="orange">Orange</option>
 </select>
 
-<label>Mot de passe :</label>
+<label for="mdp">Mot de passe :</label>
 <input id="mdp" class="input">
 
+<!-- ==================== MATÉRIEL DÉPOSÉ ==================== -->
 <div class="card-block">
 <label>Ajouter un appareil :</label>
-
 <div class="grid-3">
+
   <div><label>Type :</label><select id="type" class="input" onchange="majMarques()">
-    <option disabled selected>-- Choisir --</option>
+    <option value="" selected disabled>-- Choisir un type --</option>
     <option>Ordinateur Portable</option><option>Ordinateur Fixe</option><option>Tablette</option>
     <option>Disque dur externe</option><option>Écran</option><option>Imprimante</option><option>Autre</option>
   </select></div>
 
   <div><label>Marque :</label><select id="marque" class="input" onchange="majSeries()"></select></div>
 
-  <div><label>Série :</label><input id="serie" class="input"></div>
+  <div id="serie-block" style="display:none;">
+    <label>Série :</label>
+    <!-- 🔧 redevient un SELECT (corrige le bug d’affichage des marques) -->
+    <select id="serie" class="input" onchange="majModeles()"></select>
+  </div>
 
-  <div style="grid-column:1/-1;">
+  <div>
     <label>Modèle :</label>
-    <select id="modele" class="input" onchange="modeleAutre.style.display=(this.value==='autre'?'block':'none')"></select>
+    <select id="modele" class="input" onchange="if(this.value==='autre'){modeleAutre.style.display='block';}else{modeleAutre.style.display='none';}"></select>
     <input id="modeleAutre" class="input" placeholder="Saisir modèle" style="display:none;margin-top:6px;">
   </div>
+
 </div>
 
-<!-- ✅ ACCESSOIRES GLOBAUX (OPTION A) -->
-<label>Accessoires fournis :</label>
-<div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;">
-  <label><input type="checkbox" value="Chargeur" onclick="toggleAcc(this)"> Chargeur</label>
-  <label><input type="checkbox" value="Batterie externe" onclick="toggleAcc(this)"> Batterie externe</label>
-  <label><input type="checkbox" value="Sacoche / Housse" onclick="toggleAcc(this)"> Sacoche / Housse</label>
-  <label><input type="checkbox" value="Souris" onclick="toggleAcc(this)"> Souris</label>
-  <label><input type="checkbox" value="Clavier" onclick="toggleAcc(this)"> Clavier</label>
-  <label><input type="checkbox" value="Câble USB" onclick="toggleAcc(this)"> Câble USB</label>
-  <label><input type="checkbox" value="Câble HDMI" onclick="toggleAcc(this)"> Câble HDMI</label>
-  <label><input type="checkbox" value="Alimentation PC fixe" onclick="toggleAcc(this)"> Alimentation PC fixe</label>
-  <label><input type="checkbox" value="Support / Dock" onclick="toggleAcc(this)"> Support / Dock</label>
-</div>
-
-<label>Autres accessoires :</label>
-<input id="autres" class="input" oninput="setAutres()">
-
-<button class="secondary small-btn" onclick="ajouterAppareil()">➕ Ajouter ce matériel</button>
+<button class="secondary small-btn" onclick="ajouterAppareil()">➕</button>
 <div id="listeAppareils"></div>
 </div>
 
+<!-- ==================== ACCESSOIRES (sous Matériel déposé) ==================== -->
+<div class="accordion">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
+    Accessoires fournis :
+    <span class="arrow">▼</span>
+  </div>
+  <div class="accordion-content">
+    <div class="checkbox-group">
+      <label><input type="checkbox" name="acc" value="Chargeur"> Chargeur</label>
+      <label><input type="checkbox" name="acc" value="Batterie externe"> Batterie externe</label>
+      <label><input type="checkbox" name="acc" value="Sacoche / Housse"> Sacoche / Housse</label>
+      <label><input type="checkbox" name="acc" value="Souris"> Souris</label>
+      <label><input type="checkbox" name="acc" value="Clavier"> Clavier</label>
+      <label><input type="checkbox" name="acc" value="Câble USB"> Câble USB</label>
+      <label><input type="checkbox" name="acc" value="Câble HDMI"> Câble HDMI</label>
+      <label><input type="checkbox" name="acc" value="Alimentation PC fixe"> Alimentation PC fixe</label>
+      <label><input type="checkbox" name="acc" value="Support / Dock"> Support / Dock</label>
+    </div>
+    <label style="margin-top:10px;">Autres :</label>
+    <input id="accAutres" class="input" placeholder="Ex : Adaptateur USB-C ↔ RJ45…">
+  </div>
+</div>
+
+<!-- ==================== SAUVEGARDE ==================== -->
 <div class="card-block">
-<label>Sauvegarde :</label>
-<input type="radio" name="sauv" value="Non" checked> Non
-<input type="radio" name="sauv" value="Oui"> Oui
-<div id="optionsSauvegarde" style="margin-top:6px;">
-  <label><input type="checkbox" name="sauv-item" value="Documents"> Documents</label>
-  <label><input type="checkbox" name="sauv-item" value="Images"> Images</label>
-  <label><input type="checkbox" name="sauv-item" value="Vidéos"> Vidéos</label>
-  <label><input type="checkbox" name="sauv-item" value="Favoris"> Favoris</label>
-  <label><input type="checkbox" name="sauv-item" value="Mots de passe"> Mots de passe</label>
+<label>Sauvegarde :</label><br>
+<input type="radio" name="sauv" id="sauvNon" value="Non" checked> <label for="sauvNon">Non</label>
+<input type="radio" name="sauv" id="sauvOui" value="Oui"> <label for="sauvOui">Oui</label>
+
+<div id="optionsSauvegarde" style="display:none;margin-top:6px;">
+  <label><input type="checkbox" name="sauv-item" value="Documents"> Documents</label><br>
+  <label><input type="checkbox" name="sauv-item" value="Images"> Images</label><br>
+  <label><input type="checkbox" name="sauv-item" value="Vidéos"> Vidéos</label><br>
+  <label><input type="checkbox" name="sauv-item" value="Favoris"> Favoris</label><br>
+  <label><input type="checkbox" name="sauv-item" value="Mots de passe"> Mots de passe</label><br>
 </div>
 </div>
 
+<!-- ==================== TRAVAUX ==================== -->
 <div class="accordion">
-  <div class="accordion-header" onclick="this.parentNode.classList.toggle('open')">
+  <div class="accordion-header" onclick="toggleAccordion(this)">
     Travaux à réaliser :
     <span class="arrow">▼</span>
   </div>
@@ -326,7 +429,7 @@ document.addEventListener("click",e=>{ if(!e.target.closest("#search")&&!e.targe
   </div>
 </div>
 
-<label>Description du problème :</label>
+<label for="prob">Description du problème :</label>
 <textarea id="prob" class="textarea" rows="4"></textarea>
 
 <button class="primary" onclick="creer()">Créer la fiche</button>
@@ -336,5 +439,12 @@ document.addEventListener("click",e=>{ if(!e.target.closest("#search")&&!e.targe
 <div class="center"><a href="historique.html" class="link">📚 Voir l'historique</a></div>
 
 </div>
+
+<script>
+function toggleAccordion(el){
+  el.parentNode.classList.toggle("open");
+}
+</script>
+
 </body>
 </html>
