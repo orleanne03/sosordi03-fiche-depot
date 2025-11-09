@@ -75,7 +75,7 @@ function formatTel(){
 }
 
 // =============================================================
-// ✅ RECHERCHE TRÈS RAPIDE + NOM OK + TEL OK
+// ✅ RECHERCHE TRÈS RAPIDE + NOM OK + TEL OK (≥3 chiffres)
 // =============================================================
 async function rechercherClient(){
   let input = search.value.trim();
@@ -94,7 +94,7 @@ async function rechercherClient(){
     let nomUpper = (c.nom || "").toUpperCase();
 
     return nomUpper.startsWith(searchUpper)
-        || (telSearch.length >= 2 && telClean.startsWith(telSearch));
+        || (telSearch.length >= 3 && telClean.startsWith(telSearch));
   });
 
   if(results.length === 0){
