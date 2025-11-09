@@ -3,12 +3,81 @@
 <head>
 <meta charset="UTF-8">
 <title>Historique des dépôts</title>
-<link rel="stylesheet" href="style.css">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  font-family: Arial, sans-serif;
+  background:#f2f2f2;
+  margin:0;
+  padding:0;
+}
+h1{text-align:center;margin:20px 0;}
+.history-container{max-width:700px;margin:auto;padding:10px;}
+.fiche-card{
+  background:white;
+  border-radius:8px;
+  margin-bottom:12px;
+  overflow:hidden;
+  border:1px solid #ddd;
+  transition:0.3s;
+}
+.fiche-header{
+  display:flex;
+  justify-content:space-between;
+  padding:10px;
+  background:#eee;
+  cursor:pointer;
+}
+.fiche-header-left{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.color-tag{
+  width:14px;
+  height:14px;
+  border-radius:50%;
+  border:1px solid #0003;
+}
+.delete-btn{
+  background:none;
+  border:none;
+  font-size:18px;
+  cursor:pointer;
+}
+.fiche-content{
+  display:none;
+  padding:10px;
+  line-height:1.5em;
+}
+.fiche-card.open .fiche-content{display:block;}
+
+.tarif-input{
+  width:140px;
+  padding:5px;
+  border:1px solid #aaa;
+  border-radius:5px;
+  margin-top:4px;
+}
+
+.save-btn{
+  margin-top:8px;
+  padding:6px 10px;
+  background:#2c7;
+  color:white;
+  border:none;
+  border-radius:5px;
+  cursor:pointer;
+}
+
+.center{text-align:center;margin:20px;}
+.return-link{text-decoration:none;color:#333;font-weight:bold;}
+</style>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, orderBy, query, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, orderBy, query, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAR8PVlerANOGdzNBwZjj81I6Ajtbn63eI",
@@ -30,6 +99,19 @@ async function supprimer(id){
   await deleteDoc(doc(db,"fiches",id));
   location.reload();
 }
+
+async function saveTarifs(id){
+  let estimation = document.getElementById("est_"+id).value.trim();
+  let reel = document.getElementById("reel_"+id).value.trim();
+
+  await updateDoc(doc(db, "fiches", id), {
+    tarifEstimation: estimation || "",
+    tarifReel: reel || ""
+  });
+
+  alert("Tarifs mis à jour ✅");
+}
+window.saveTarifs = saveTarifs;
 
 async function load(){
   let snap = await getDocs(query(collection(db,"fiches"), orderBy("date","desc")));
@@ -60,12 +142,19 @@ async function load(){
     <p>💻<br>${appareils.replace(/•/g,"🔹")}</p>
     <p>💾 Sauvegarde : <strong>${sauv}</strong></p>
     <p>🔐 Mot de passe : <strong>${mdp}</strong></p>
-
-    <!-- ✅ TRAVAUX EN PREMIER -->
     <p>🔧 Travaux :<br> <strong>${travaux}</strong></p>
-
-    <!-- ✅ PROBLÈME EN DESSOUS -->
     <p>📝 ${f.probleme}</p>
+
+    <!-- TARIFS -->
+    <p>💰 Tarif estimation :<br>
+       <input type="text" id="est_${d.id}" class="tarif-input" value="${f.tarifEstimation || ""}">
+    </p>
+
+    <p>✅ Tarif réel :<br>
+       <input type="text" id="reel_${d.id}" class="tarif-input" value="${f.tarifReel || ""}">
+    </p>
+
+    <button class="save-btn" onclick="saveTarifs('${d.id}')">💾 Enregistrer</button>
   </div>
 
 </div>`;
@@ -76,7 +165,6 @@ window.supprimer = supprimer;
 load();
 </script>
 
-<!-- ✅ Script accordéon -->
 <script>
 document.addEventListener("click", function(e){
   let header = e.target.closest(".fiche-header");
