@@ -69,25 +69,22 @@ async function rechercherClient(){
   let all = await getDocs(collection(db,"clients"));
   let results = [];
 
-  // --------- SEULE MODIF ICI ----------
-  // Téléphone : ne garder que ceux qui COMMENCENT par les chiffres saisis
+  // ✅ Téléphone — seule ligne modifiée
   let telSearch = input.replace(/\D/g,"");
   if(telSearch.length >= 2){
     all.forEach(doc=>{
       let c = doc.data();
       let stored = (c.tel || "").replace(/\D/g,"");
-      if(stored.startsWith(telSearch)) results.push(c);
+      if(stored.startsWith(telSearch)) results.push(c); // ✅ MODIFICATION
     });
   }
-  // ------------------------------------
 
-  // Nom : commence par le texte saisi (inchangé)
+  // ✅ Nom — inchangé
   all.forEach(doc=>{
     let c = doc.data();
     if(c.nom && c.nom.toUpperCase().startsWith(searchUpper)) results.push(c);
   });
 
-  // Uniques
   let uniques = [];
   let seen = new Set();
   results.forEach(c=>{
@@ -154,7 +151,7 @@ const marquesParType = {
   "Autre": ["Autre"]
 };
 
-// ---- SERIES + MODELES (Firestore) ----
+// ---- SERIES + MODELES ----
 let seriesParMarque = {};
 let modelesParSerie = {};
 
@@ -197,16 +194,14 @@ function majModeles(){
 }
 window.majModeles = majModeles;
 
-
-// ✅✅✅  CORRECTION TABLETTE / TÉLÉPHONE  ✅✅✅
+// ✅ Affichage sauvegarde
 document.querySelectorAll('input[name="sauv"]').forEach(r=>{
   r.addEventListener("change", ()=>{
     optionsSauvegarde.style.display = (r.value === "Oui") ? "block" : "none";
   });
 });
 
-
-// ===================== ENREGISTREMENT FICHE =====================
+// ===================== ENREGISTREMENT =====================
 async function enregistrer(){
   let s = serie.value.trim();
   let m = (modeleAutre.style.display==="block" ? modeleAutre.value.trim() : modele.value.trim());
@@ -311,9 +306,7 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.dis
 
   <div>
     <label>Modèle :</label>
-
     <select id="modele" class="input" onchange="if(this.value==='autre'){modeleAutre.style.display='block';}else{modeleAutre.style.display='none';}"></select>
-
     <input id="modeleAutre" class="input" placeholder="Saisir modèle" style="display:none;margin-top:6px;">
   </div>
 
