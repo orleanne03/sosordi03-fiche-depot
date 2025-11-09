@@ -69,15 +69,17 @@ async function rechercherClient(){
   let all = await getDocs(collection(db,"clients"));
   let results = [];
 
+  // ✅ NUMÉRO : uniquement les numéros qui commencent par ce qui est tapé
   let telSearch = input.replace(/\D/g,"");
   if(telSearch.length >= 2){
     all.forEach(doc=>{
       let c = doc.data();
       let stored = (c.tel || "").replace(/\D/g,"");
-      if(stored.includes(telSearch)) results.push(c);
+      if(stored.startsWith(telSearch)) results.push(c);
     });
   }
 
+  // ✅ NOM : commence par (inchangé)
   all.forEach(doc=>{
     let c = doc.data();
     if(c.nom && c.nom.toUpperCase().startsWith(searchUpper)) results.push(c);
@@ -192,15 +194,11 @@ function majModeles(){
 }
 window.majModeles = majModeles;
 
-
-// ✅✅✅  CORRECTION TABLETTE / TÉLÉPHONE  ✅✅✅
-// **Seule modification du fichier**
 document.querySelectorAll('input[name="sauv"]').forEach(r=>{
   r.addEventListener("change", ()=>{
     optionsSauvegarde.style.display = (r.value === "Oui") ? "block" : "none";
   });
 });
-
 
 // ===================== ENREGISTREMENT FICHE =====================
 async function enregistrer(){
