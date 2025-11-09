@@ -69,16 +69,14 @@ async function rechercherClient(){
   let all = await getDocs(collection(db,"clients"));
   let results = [];
 
-  // ======= SEULE MODIFICATION =======
   let telSearch = input.replace(/\D/g,"");
   if(telSearch.length >= 2){
     all.forEach(doc=>{
       let c = doc.data();
       let stored = (c.tel || "").replace(/\D/g,"");
-      if(stored.startsWith(telSearch)) results.push(c); // <-- startsWith ici
+      if(stored.startsWith(telSearch)) results.push(c); // ✅ SEULE MODIFICATION
     });
   }
-  // ==================================
 
   all.forEach(doc=>{
     let c = doc.data();
@@ -194,16 +192,14 @@ function majModeles(){
 }
 window.majModeles = majModeles;
 
-
-// ✅✅✅  CORRECTION TABLETTE / TÉLÉPHONE  ✅✅✅
 document.querySelectorAll('input[name="sauv"]').forEach(r=>{
   r.addEventListener("change", ()=>{
     optionsSauvegarde.style.display = (r.value === "Oui") ? "block" : "none";
   });
 });
 
+// ===================== SAUVEGARDE & FICHE =====================
 
-// ===================== ENREGISTREMENT FICHE =====================
 async function enregistrer(){
   let s = serie.value.trim();
   let m = (modeleAutre.style.display==="block" ? modeleAutre.value.trim() : modele.value.trim());
