@@ -168,12 +168,14 @@ async function load(){
     <p>📝 ${f.probleme || ""}</p>
 
     <!-- TARIFS -->
-   <div class="tarifs-simple">
-
-  💰 <input type="text" id="est_${d.id}" value="${f.tarifEstimation || ""}">
-  ✅ <input type="text" id="reel_${d.id}" value="${f.tarifReel || ""}">
+ <div class="tarifs-row">
+  <div class="tarif-item">
+    💰 <input type="text" id="est_${d.id}" class="tarif-input" value="${f.tarifEstimation || ""}">
+  </div>
+  <div class="tarif-item">
+    ✅ <input type="text" id="reel_${d.id}" class="tarif-input" value="${f.tarifReel || ""}">
+  </div>
   <button class="save-mini" onclick="saveTarifs('${d.id}')">💾</button>
-
 </div>
   </div>
 
