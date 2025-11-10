@@ -169,12 +169,9 @@ async function load(){
 
     <!-- TARIFS -->
  <!-- TARIFS -->
-<div class="tarifs-row">
+<div class="tarif-row">
   <span>💰</span>
-  <input class="tarif-input" type="text" id="est_${d.id}" value="${f.tarifEstimation || ""}">
-  
-  
-  
+  <input class="tarif-euro" type="text" id="est_${d.id}" value="${f.tarifEstimation || ""}">
   <button class="save-mini" onclick="saveTarifs('${d.id}')">💾</button>
 </div>
   </div>
