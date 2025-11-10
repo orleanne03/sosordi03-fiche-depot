@@ -943,3 +943,31 @@ label[for="nom"]::before {
   .tarif-input:nth-of-type(2) { grid-area: reel-input; }
   .save-icon { grid-area: save; align-self: center; }
 }
+.tarifs-simple {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: nowrap; /* les empêche de passer à la ligne */
+}
+
+.tarifs-simple input {
+  width: 100px;        /* largeur fixe → ça tient */
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #cbd4e1;
+  background: #f9fbff;
+  font-size: 15px;
+  text-align: center;
+}
+
+.save-mini {
+  background: #4CAF50;
+  border: none;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  color: white;
+}
+.save-mini:hover { background: #3b9440; }
