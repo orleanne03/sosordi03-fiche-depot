@@ -1133,3 +1133,15 @@ padding: 10px;
 @media (min-width: 601px) {
   .tarif-euro { width: 140px; font-size: 16px; }
 }
+/* Séparateur entre chaque info */
+.history-page .fiche-content p,
+.history-page .fiche-content .fiche-date {
+  border-bottom: 1px solid rgba(0,0,0,0.12);
+  padding: 6px 0;
+  margin: 0;
+}
+
+/* Pas de ligne sous la dernière entrée */
+.history-page .fiche-content p:last-of-type {
+  border-bottom: none;
+}
