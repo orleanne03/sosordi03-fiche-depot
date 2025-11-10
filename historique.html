@@ -116,6 +116,24 @@ h1{text-align:center;margin:20px 0;}
   .tarifs-row .save-icon{ padding:6px 8px; font-size:18px; }
   .tarifs-row .emoji{ font-size:16px; }
 }
+/* 🚨 Séparateur fiable (sans dépendre des <p> ou <div>) */
+.fiche-card .fiche-content > * {
+  border-bottom: 1px solid #d9dde2 !important;
+  padding: 8px 0 !important;
+  margin: 0 !important;
+}
+
+/* ❌ On enlève la ligne sous le dernier élément */
+.fiche-card .fiche-content > *:last-child {
+  border-bottom: none !important;
+}
+
+/* ❌ On enlève le séparateur sous la ligne TARIF */
+.fiche-card .tarifs-row {
+  border-bottom: none !important;
+  padding-bottom: 0 !important;
+  margin-bottom: 0 !important;
+}
 </style>
 
 <script type="module">
