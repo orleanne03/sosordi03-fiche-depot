@@ -73,6 +73,49 @@ h1{text-align:center;margin:20px 0;}
 
 .center{text-align:center;margin:20px;}
 .return-link{text-decoration:none;color:#333;font-weight:bold;}
+
+/* ───────────────────────────────────────────
+   TARIFS – 1 SEULE LIGNE, € AUTO, DISQUETTE
+   ─────────────────────────────────────────── */
+.tarifs-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:nowrap;
+  white-space:nowrap;
+  margin-top:8px;
+}
+.tarifs-row .tarif-input{
+  width:150px;           /* desktop */
+  padding:8px 10px;
+  border:1px solid #cbd4e1;
+  border-radius:8px;
+  background:#f9fbff;
+  font-size:16px;
+}
+.tarifs-row .save-icon{
+  background:#4caf50;
+  color:#fff;
+  border:none;
+  border-radius:8px;
+  padding:8px 10px;
+  font-size:20px;
+  cursor:pointer;
+}
+.tarifs-row .save-icon:hover{ background:#3b9440; }
+.tarifs-row .emoji{
+  font-size:18px;
+  line-height:1;
+  display:inline-flex;
+  align-items:center;
+}
+
+/* plus compact sur smartphone pour tenir sur UNE ligne */
+@media (max-width: 480px){
+  .tarifs-row .tarif-input{ width:120px; font-size:15px; padding:6px 8px; }
+  .tarifs-row .save-icon{ padding:6px 8px; font-size:18px; }
+  .tarifs-row .emoji{ font-size:16px; }
+}
 </style>
 
 <script type="module">
@@ -100,25 +143,31 @@ async function supprimer(id){
   location.reload();
 }
 
+/* ✅ Nouvelle sauvegarde : 1 seule case (tarifReel) */
 async function saveTarifs(id){
-  let field = document.getElementById("est_"+id);
-  if(!field) return;
+  const input = document.getElementById("tarif_"+id);
+  if(!input) return;
 
-  let value = field.value.trim();
-
-  // Ajout automatique du € si pas déjà présent
-  if(value && !value.endsWith("€")){
-    value = value + " €";
-    field.value = value;
-  }
+  // formatte "€" automatiquement avant enregistrement
+  let v = (input.value || "").trim();
+  if(v && !/€$/.test(v)) v = v.replace(/\s*€?$/, "") + " €";
 
   await updateDoc(doc(db, "fiches", id), {
-    tarifEstimation: value
+    tarifReel: v
   });
 
-  alert("Tarif mis à jour ✅");
+  input.value = v; // refléter le formatage
+  alert("Tarif enregistré ✅");
 }
 window.saveTarifs = saveTarifs;
+
+/* ✨ format € au blur */
+function euroAuto(el){
+  let v = (el.value || "").trim();
+  if(!v) return;
+  if(!/€$/.test(v)) el.value = v.replace(/\s*€?$/, "") + " €";
+}
+window.euroAuto = euroAuto;
 
 function renderAccessoires(f){
   // Compat : accepte f.accessoires ou f.accessoiresFournis
@@ -174,13 +223,14 @@ async function load(){
     <p>🔧 Travaux :<br> <strong>${travaux}</strong></p>
     <p>📝 ${f.probleme || ""}</p>
 
-    <!-- TARIFS -->
- <!-- TARIFS -->
-<div class="tarif-row">
-  <span>💰</span>
-  <input class="tarif-euro" type="text" id="est_${d.id}" value="${f.tarifEstimation || ""}">
-  <button class="save-mini" onclick="saveTarifs('${d.id}')">💾</button>
-</div>
+    <!-- ╔══════════════════════════════════════╗
+         ║   TARIF – 1 CASE + DISQUETTE        ║
+         ╚══════════════════════════════════════╝ -->
+    <div class="tarifs-row">
+      <span class="emoji">💰</span>
+      <input type="text" id="tarif_${d.id}" class="tarif-input" value="${f.tarifReel || ""}" onblur="euroAuto(this)" placeholder="Montant">
+      <button class="save-icon" title="Enregistrer" onclick="saveTarifs('${d.id}')">💾</button>
+    </div>
   </div>
 
 </div>`;
