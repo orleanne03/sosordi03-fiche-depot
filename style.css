@@ -1133,32 +1133,29 @@ padding: 10px;
 @media (min-width: 601px) {
   .tarif-euro { width: 140px; font-size: 16px; }
 }
-/* Séparateur entre chaque info */
-.history-page .fiche-content p,
-.history-page .fiche-content .fiche-date {
-  border-bottom: 1px solid rgba(0,0,0,0.12);
-  padding: 6px 0;
-  margin: 0;
+/* Ligne séparatrice sur chaque info */
+.fiche-card .fiche-content > * {
+  border-bottom: 1px solid rgba(0,0,0,0.18) !important;
+  padding: 8px 0 !important;
+  margin: 0 !important;
 }
 
-/* Pas de ligne sous la dernière entrée */
-.history-page .fiche-content p:last-of-type {
-  border-bottom: none;
-}
-/* Séparateur global pour chaque bloc d'info */
-.history-page .fiche-content > * {
-  border-bottom: 1px solid rgba(0,0,0,0.18);
-  padding: 6px 0;
-  margin: 0;
+/* Ne pas mettre de séparation sous la dernière info */
+.fiche-card .fiche-content > *:last-child {
+  border-bottom: none !important;
 }
 
-/* Retirer le trait sous le bloc tarifs */
-.history-page .tarifs-row {
+/* Ne pas mettre de séparation sous les titres ou sections complexes */
+.fiche-card .fiche-content br,
+.fiche-card .fiche-content strong,
+.fiche-card .fiche-content span {
+  border-bottom: none !important;
+}
+
+/* Ne touche pas le bloc TARIF */
+.fiche-card .tarifs-row,
+.fiche-card .tarifs-row * {
   border-bottom: none !important;
   padding-bottom: 0 !important;
-}
-
-/* Dernier élément sans séparation */
-.history-page .fiche-content > *:last-child {
-  border-bottom: none !important;
+  margin-bottom: 0 !important;
 }
