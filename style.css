@@ -952,7 +952,7 @@ label[for="nom"]::before {
 }
 
 .tarifs-simple input {
-  width: 30px !important;        /* ← réduit pour tenir sur une ligne */
+  width: 80px !important;        /* ← réduit pour tenir sur une ligne */
   padding: 4px 6px;
   border-radius: 6px;
   border: 1px solid #ccc;
@@ -971,8 +971,8 @@ label[for="nom"]::before {
 }
 .save-mini:active { transform: scale(0.9); }
 input#est_EAvd9YldMkTsRX0bt725 {
-    width: 80px;
+    width: 80px !important;
 }
 input#reel_EAvd9YldMkTsRX0bt725 {
-    width: 80px;
+    width: 80px !important;
 }
