@@ -92,8 +92,6 @@ function formatTel(){
 
 // =============================================================
 // ✅ RECHERCHE RAPIDE NOM + TÉLÉPHONE
-// NOM → dès 2 caractères
-// TEL → dès 3 chiffres, via indexTel
 // =============================================================
 function rechercherClient(){
   let input = search.value.trim();
@@ -105,7 +103,6 @@ function rechercherClient(){
 
   let results = [];
 
-  // Recherche téléphone (très rapide)
   if(telSearch.length >= 3){
     let prefix = telSearch.slice(0,3);
     let group = indexTel[prefix] || [];
@@ -115,12 +112,10 @@ function rechercherClient(){
     });
   } 
 
-  // Recherche nom (début uniquement)
   clientsCache.forEach(c=>{
     if(c.nom && c.nom.toUpperCase().startsWith(searchUpper)) results.push(c);
   });
 
-  // Éviter doublons
   let uniques = [];
   let seen = new Set();
   results.forEach(c=>{
@@ -202,7 +197,6 @@ async function chargerAutoData(){
 await chargerAutoData();
 
 function majMarques(){
-  // Remplit la liste des marques selon le type
   marque.innerHTML = "";
   const liste = marquesParType[type.value] || [];
   liste.forEach(m=> marque.innerHTML += `<option>${m}</option>`);
@@ -211,11 +205,10 @@ function majMarques(){
 window.majMarques = majMarques;
 
 function majSeries(){
-  // Affiche/alimente le SELECT série
   let liste = seriesParMarque[marque.value] || [];
   if(liste.length === 0){
     document.getElementById("serie-block").style.display="none";
-    serie.innerHTML = ""; // propre
+    serie.innerHTML = "";
   } else {
     document.getElementById("serie-block").style.display="block";
     serie.innerHTML = "";
@@ -244,7 +237,6 @@ toggleSauvegarde();
 
 // ===================== ENREGISTREMENT =====================
 async function enregistrer(){
-  // Enregistrer dynamiquement séries / modèles saisis
   let s = (serie.value || "").trim();
   let m = (modeleAutre.style.display==="block" ? (modeleAutre.value || "").trim() : (modele.value || "").trim());
   let mk = marque.value;
@@ -272,14 +264,9 @@ async function creer(){
 
   await enregistrer();
 
-  // Sauvegarde
   let sauvegardeChoix = document.querySelector('input[name="sauv"]:checked')?.value || "Non";
   let sauvItems = [...document.querySelectorAll('input[name="sauv-item"]:checked')].map(c => c.value);
-
-  // Travaux
   let travauxSelectionnes = [...document.querySelectorAll('.trav:checked')].map(c => c.value);
-
-  // ✅ Accessoires (globaux, un seul bloc)
   let accessoiresSelectionnes = [...document.querySelectorAll('input[name="acc"]:checked')].map(c => c.value);
   let accessoiresAutres = (accAutres.value || "").trim();
 
@@ -291,7 +278,6 @@ async function creer(){
     sauvegarde: sauvegardeChoix,
     sauvegardeItems: sauvItems,
     travaux: travauxSelectionnes,
-    // ✅ Accessoires enregistrés
     accessoires: accessoiresSelectionnes,
     accessoiresAutres: accessoiresAutres,
     motdepasse: mdp.value.trim() || "",
@@ -354,7 +340,6 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.dis
 
   <div id="serie-block" style="display:none;">
     <label>Série :</label>
-    <!-- 🔧 redevient un SELECT (corrige le bug d’affichage des marques) -->
     <select id="serie" class="input" onchange="majModeles()"></select>
   </div>
 
@@ -395,9 +380,19 @@ document.addEventListener("keydown", e=>{ if(e.key==="Escape") suggest.style.dis
 
 <!-- ==================== SAUVEGARDE ==================== -->
 <div class="card-block">
-<label>Sauvegarde :</label><br>
-<input type="radio" name="sauv" id="sauvNon" value="Non" checked> <label for="sauvNon">Non</label>
-<input type="radio" name="sauv" id="sauvOui" value="Oui"> <label for="sauvOui">Oui</label>
+<label>Sauvegarde :</label>
+
+<div style="display:flex; gap:20px; align-items:center; margin-top:8px;">
+  <label style="display:flex; align-items:center; gap:6px;">
+    <input type="radio" name="sauv" id="sauvNon" value="Non" checked>
+    Non
+  </label>
+
+  <label style="display:flex; align-items:center; gap:6px;">
+    <input type="radio" name="sauv" id="sauvOui" value="Oui">
+    Oui
+  </label>
+</div>
 
 <div id="optionsSauvegarde" style="display:none;margin-top:6px;">
   <label><input type="checkbox" name="sauv-item" value="Documents"> Documents</label><br>
