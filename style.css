@@ -861,3 +861,36 @@ label[for="nom"]::before {
   display: flex !important;
   align-items: center !important;
 }
+.tarifs-row {
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-top:8px;
+  flex-wrap:nowrap; /* 👈 empêche la ligne de se casser */
+}
+
+.tarif-item {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  white-space:nowrap;
+}
+
+.tarif-item input {
+  width:110px;        /* 👈 largeur fixe pour tenir sur une ligne */
+  padding:6px 8px;
+  border-radius:8px;
+  border:1px solid #cbd4e1;
+  background:#f9fbff;
+}
+
+.save-btn {
+  background:#4CAF50;
+  border:none;
+  color:white;
+  padding:8px 10px;
+  border-radius:8px;
+  cursor:pointer;
+  font-size:20px;
+}
+.save-btn:hover { background:#3b9440; }
