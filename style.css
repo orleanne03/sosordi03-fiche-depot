@@ -1033,3 +1033,52 @@ padding: 10px;
     font-size: 18px;
   }
 }
+.tarifs-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: nowrap;
+}
+
+/* Champs */
+.tarif-input {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #cbd4e1;
+  background: #f9fbff;
+}
+
+/* Bouton disquette */
+.save-mini {
+  background: #4caf50;
+  border: none;
+  color: white;
+  padding: 6px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+}
+.save-mini:hover {
+  background: #3b9440;
+}
+
+/* 📱 Smartphone */
+@media (max-width: 600px) {
+  .tarif-input {
+    width: 90px !important;
+    font-size: 14px;
+  }
+  .save-mini {
+    padding: 4px 6px;
+    font-size: 16px;
+  }
+}
+
+/* 🖥️ PC */
+@media (min-width: 601px) {
+  .tarif-input {
+    width: 140px !important;
+    font-size: 16px;
+  }
+}
