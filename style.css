@@ -952,7 +952,7 @@ label[for="nom"]::before {
 }
 
 .tarifs-simple input {
-  width: 50px;        /* ← réduit pour tenir sur une ligne */
+  width: 30px !important;        /* ← réduit pour tenir sur une ligne */
   padding: 4px 6px;
   border-radius: 6px;
   border: 1px solid #ccc;
