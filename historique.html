@@ -101,15 +101,22 @@ async function supprimer(id){
 }
 
 async function saveTarifs(id){
-  let estimation = document.getElementById("est_"+id).value.trim();
-  let reel = document.getElementById("reel_"+id).value.trim();
+  let field = document.getElementById("est_"+id);
+  if(!field) return;
+
+  let value = field.value.trim();
+
+  // Ajout automatique du € si pas déjà présent
+  if(value && !value.endsWith("€")){
+    value = value + " €";
+    field.value = value;
+  }
 
   await updateDoc(doc(db, "fiches", id), {
-    tarifEstimation: estimation || "",
-    tarifReel: reel || ""
+    tarifEstimation: value
   });
 
-  alert("Tarifs mis à jour ✅");
+  alert("Tarif mis à jour ✅");
 }
 window.saveTarifs = saveTarifs;
 
