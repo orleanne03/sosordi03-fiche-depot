@@ -978,3 +978,58 @@ input#reel_EAvd9YldMkTsRX0bt725 {
     width: 80px !important;
 padding: 10px;
 }
+.tarifs-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  flex-wrap: nowrap;
+}
+
+/* Champs */
+.tarif-input {
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid #cbd4e1;
+  background: #f9fbff;
+}
+
+/* Bouton */
+.save-mini {
+  background: #4caf50;
+  border: none;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+}
+.save-mini:hover {
+  background: #3a8c42;
+}
+
+/* 📱 Version Smartphone */
+@media (max-width: 600px) {
+  .tarif-input {
+    width: 90px !important;  /* plus petit */
+    font-size: 14px;         /* mieux lisible */
+  }
+
+  .save-mini {
+    padding: 4px 8px;
+    font-size: 16px;
+  }
+}
+
+/* 🖥️ Version PC / Tablette */
+@media (min-width: 601px) {
+  .tarif-input {
+    width: 140px !important; /* plus grand */
+    font-size: 16px;
+  }
+
+  .save-mini {
+    padding: 6px 12px;
+    font-size: 18px;
+  }
+}
