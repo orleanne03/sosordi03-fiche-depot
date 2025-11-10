@@ -972,7 +972,9 @@ label[for="nom"]::before {
 .save-mini:active { transform: scale(0.9); }
 input#est_EAvd9YldMkTsRX0bt725 {
     width: 80px !important;
+padding: 10px;
 }
 input#reel_EAvd9YldMkTsRX0bt725 {
     width: 80px !important;
+padding: 10px;
 }
