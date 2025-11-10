@@ -1066,7 +1066,7 @@ padding: 10px;
 /* 📱 Smartphone */
 @media (max-width: 600px) {
   .tarif-input {
-    width: 90px !important;
+    width: 80px !important;
     font-size: 14px;
   }
   .save-mini {
