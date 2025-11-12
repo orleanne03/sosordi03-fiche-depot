@@ -380,11 +380,28 @@ window.creer = creer;
     <select id="serie" class="input" onchange="majModeles()"></select>
   </div>
 
-  <div>
-    <label>Modèle :</label>
-    <select id="modele" class="input" onchange="if(this.value==='autre'){modeleAutre.style.display='block';}else{modeleAutre.style.display='none';}"></select>
-    <input id="modeleAutre" class="input" placeholder="Saisir modèle" style="display:none;margin-top:6px;">
-  </div>
+<div>
+  <label>Modèle :</label>
+  <select id="modele" class="input"></select>
+  <input id="modeleAutre" class="input" placeholder="Saisir modèle" style="display:none;margin-top:6px;">
+</div>
+
+<script>
+  // ✅ Surveille les changements de sélection du menu "modele"
+  document.addEventListener("change", e => {
+    if (e.target && e.target.id === "modele") {
+      const autreChamp = document.getElementById("modeleAutre");
+      if (e.target.value === "autre") {
+        autreChamp.style.display = "block";
+        autreChamp.focus(); // met le curseur directement dedans
+      } else {
+        autreChamp.style.display = "none";
+        autreChamp.value = ""; // réinitialise si on re-choisit un modèle normal
+      }
+    }
+  });
+</script>
+
 
 </div>
 
