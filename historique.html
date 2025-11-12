@@ -40,7 +40,7 @@ h1{text-align:center;margin:20px 0;}
   border-radius:50%;
   border:1px solid #0003;
 }
-.delete-btn{
+.delete-btn, .edit-btn{
   background:none;
   border:none;
   font-size:18px;
@@ -54,11 +54,12 @@ h1{text-align:center;margin:20px 0;}
 .fiche-card.open .fiche-content{display:block;}
 
 .tarif-input{
-  width:140px;
+  width:100%;
   padding:5px;
   border:1px solid #aaa;
   border-radius:5px;
   margin-top:4px;
+  box-sizing:border-box;
 }
 
 .save-btn{
@@ -70,70 +71,9 @@ h1{text-align:center;margin:20px 0;}
   border-radius:5px;
   cursor:pointer;
 }
-
+.save-btn:hover{opacity:0.8;}
 .center{text-align:center;margin:20px;}
 .return-link{text-decoration:none;color:#333;font-weight:bold;}
-
-/* ───────────────────────────────────────────
-   TARIFS – 1 SEULE LIGNE, € AUTO, DISQUETTE
-   ─────────────────────────────────────────── */
-.tarifs-row{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  flex-wrap:nowrap;
-  white-space:nowrap;
-  margin-top:8px;
-}
-.tarifs-row .tarif-input{
-  width:150px;           /* desktop */
-  padding:8px 10px;
-  border:1px solid #cbd4e1;
-  border-radius:8px;
-  background:#f9fbff;
-  font-size:16px;
-}
-.tarifs-row .save-icon{
-  background:#4caf50;
-  color:#fff;
-  border:none;
-  border-radius:8px;
-  padding:8px 10px;
-  font-size:20px;
-  cursor:pointer;
-}
-.tarifs-row .save-icon:hover{ background:#3b9440; }
-.tarifs-row .emoji{
-  font-size:18px;
-  line-height:1;
-  display:inline-flex;
-  align-items:center;
-}
-
-/* plus compact sur smartphone pour tenir sur UNE ligne */
-@media (max-width: 480px){
-  .tarifs-row .tarif-input{ width:120px; font-size:15px; padding:6px 8px; }
-  .tarifs-row .save-icon{ padding:6px 8px; font-size:18px; }
-  .tarifs-row .emoji{ font-size:16px; }
-}
-/* 🚨 Séparateur fiable (sans dépendre des <p> ou <div>) */
-.fiche-card .fiche-content > * {
-  border-bottom: 1px solid #d9dde2 !important;
-  padding: 8px 0 !important;
-  margin: 0 !important;
-}
-
-/* ❌ On enlève la ligne sous le dernier élément */
-.fiche-card .fiche-content > *:last-child {
-  border-bottom: none !important;
-}
-
-/* ❌ On enlève le séparateur sous la ligne TARIF */
-.fiche-card .tarifs-row {
-  border-bottom: none !important;
-  padding-bottom: 0 !important;
-  margin-bottom: 0 !important;
-}
 </style>
 
 <script type="module">
@@ -152,60 +92,101 @@ const db = getFirestore(app);
 function formatTelAffichage(t){
   if(!t) return "";
   let clean = t.replace(/\D/g,"");
-  return clean.replace(/(..)(?=.)/g,"$1-");
+  return clean.replace(/(..)(?=(..)+$)/g,"$1-");
 }
 
 async function supprimer(id){
   if(!confirm("Supprimer cette fiche ?")) return;
-  await deleteDoc(doc(db,"fiches",id));
-  location.reload();
+  try {
+    await deleteDoc(doc(db,"fiches",id));
+    location.reload();
+  } catch(e){
+    alert("Erreur lors de la suppression : "+e.message);
+  }
 }
 
-/* ✅ Nouvelle sauvegarde : 1 seule case (tarifReel) */
 async function saveTarifs(id){
-  const input = document.getElementById("tarif_"+id);
-  if(!input) return;
-
-  // formatte "€" automatiquement avant enregistrement
-  let v = (input.value || "").trim();
-  if(v && !/€$/.test(v)) v = v.replace(/\s*€?$/, "") + " €";
-
-  await updateDoc(doc(db, "fiches", id), {
-    tarifReel: v
-  });
-
-  input.value = v; // refléter le formatage
-  alert("Tarif enregistré ✅");
+  let estimation = document.getElementById("est_"+id).value.trim();
+  let reel = document.getElementById("reel_"+id).value.trim();
+  try {
+    await updateDoc(doc(db, "fiches", id), {
+      tarifEstimation: estimation || "",
+      tarifReel: reel || ""
+    });
+    alert("Tarifs mis à jour ✅");
+  } catch(e){
+    alert("Erreur : "+e.message);
+  }
 }
 window.saveTarifs = saveTarifs;
+window.supprimer = supprimer;
 
-/* ✨ format € au blur */
-function euroAuto(el){
-  let v = (el.value || "").trim();
-  if(!v) return;
-  if(!/€$/.test(v)) el.value = v.replace(/\s*€?$/, "") + " €";
+async function editFiche(id){
+  const snap = await getDocs(query(collection(db,"fiches")));
+  const docData = snap.docs.find(d => d.id === id)?.data();
+  if (!docData) return alert("Fiche introuvable");
+
+  const zone = document.getElementById("content_"+id);
+  zone.innerHTML = `
+    <label>Nom : 
+      <input type="text" id="nom_${id}" value="${docData.nom || ''}" class="tarif-input">
+    </label><br>
+
+    <label>Téléphone principal : 
+      <input type="text" id="tel_${id}" value="${docData.tel || ''}" class="tarif-input">
+    </label><br>
+
+    <label>Téléphone secondaire : 
+      <input type="text" id="tel2_${id}" value="${docData.tel2 || ''}" class="tarif-input">
+    </label><br>
+
+    <label>Mot de passe : 
+      <input type="text" id="mdp_${id}" value="${docData.motdepasse || ''}" class="tarif-input">
+    </label><br>
+
+    <label>Problème : 
+      <textarea id="prob_${id}" rows="3" class="tarif-input">${docData.probleme || ''}</textarea>
+    </label><br>
+
+    <label>Travaux : 
+      <textarea id="trav_${id}" rows="3" class="tarif-input">${(docData.travaux||[]).join(", ")}</textarea>
+    </label><br>
+
+    <label>Tarif estimation : 
+      <input type="text" id="est_${id}" value="${docData.tarifEstimation || ''}" class="tarif-input">
+    </label><br>
+
+    <label>Tarif réel : 
+      <input type="text" id="reel_${id}" value="${docData.tarifReel || ''}" class="tarif-input">
+    </label><br>
+
+    <button class="save-btn" onclick="saveFiche('${id}')">💾 Sauvegarder</button>
+    <button class="save-btn" style="background:#aaa" onclick="location.reload()">❌ Annuler</button>
+  `;
 }
-window.euroAuto = euroAuto;
+window.editFiche = editFiche;
 
-function renderAccessoires(f){
-  // Compat : accepte f.accessoires ou f.accessoiresFournis
-  const list = (Array.isArray(f.accessoires) && f.accessoires.length ? f.accessoires
-               : (Array.isArray(f.accessoiresFournis) ? f.accessoiresFournis : []));
-  const autres = (f.accessoiresAutres || f.autresAccessoires || "").trim();
+async function saveFiche(id){
+  const data = {
+    nom: document.getElementById("nom_"+id).value.trim(),
+    tel: document.getElementById("tel_"+id).value.trim(),
+    tel2: document.getElementById("tel2_"+id).value.trim(), // 👈 nouveau champ
+    motdepasse: document.getElementById("mdp_"+id).value.trim(),
+    probleme: document.getElementById("prob_"+id).value.trim(),
+    travaux: document.getElementById("trav_"+id).value.split(",").map(x=>x.trim()).filter(x=>x),
+    tarifEstimation: document.getElementById("est_"+id).value.trim(),
+    tarifReel: document.getElementById("reel_"+id).value.trim(),
+  };
 
-  if((list && list.length) || autres){
-    let html = "";
-    if(list && list.length){
-      html += list.map(x=>"• "+x).join("<br>");
-    }
-    if(autres){
-      if(html) html += "<br>";
-      html += "• Autres : "+autres;
-    }
-    return html.replace(/•/g,"🔹");
+  try {
+    await updateDoc(doc(db, "fiches", id), data);
+    alert("Fiche mise à jour ✅");
+    location.reload();
+  } catch(e){
+    alert("Erreur : "+e.message);
   }
-  return "Aucun";
 }
+window.saveFiche = saveFiche;
 
 async function load(){
   let snap = await getDocs(query(collection(db,"fiches"), orderBy("date","desc")));
@@ -213,49 +194,48 @@ async function load(){
 
   snap.forEach(d=>{
     let f = d.data();
-    let appareils = (f.appareils || []).map(a=>`• ${a.type} — ${a.marque} ${a.modele || ""}`).join("<br>");
+    let appareils = (f.appareils||[]).map(a=>`• ${a.type} — ${a.marque} ${a.modele}`).join("<br>");
     let sauv = (f.sauvegarde==="Oui") ? `Oui (${(f.sauvegardeItems||[]).join(", ")})` : "Non";
     let travaux = (f.travaux?.length) ? f.travaux.join("<br>") : "Aucun";
     let mdp = f.motdepasse && f.motdepasse.trim() ? f.motdepasse : "Non renseigné";
-    let accHTML = renderAccessoires(f);
 
-    zone.innerHTML += `
+    zone.insertAdjacentHTML("beforeend", `
 <div class="fiche-card accordion-card">
-
   <div class="fiche-header">
     <div class="fiche-header-left">
       <span class="color-tag" style="background:${f.couleur || 'transparent'}"></span>
       <span class="fiche-name">${f.nom}</span>
     </div>
-    <button class="delete-btn" onclick="supprimer('${d.id}')">🗑</button>
-  </div>
-
-  <div class="fiche-content">
-    <div class="fiche-date">📅 ${new Date(f.date).toLocaleDateString()}</div>
-
-    <p>📞 ${formatTelAffichage(f.tel)}</p>
-    <p>💻<br>${(appareils || "").replace(/•/g,"🔹")}</p>
-    <p>🎒 Accessoires fournis :<br><strong>${accHTML}</strong></p>
-    <p>💾 Sauvegarde : <strong>${sauv}</strong></p>
-    <p>🔐 Mot de passe : <strong>${mdp}</strong></p>
-    <p>🔧 Travaux :<br> <strong>${travaux}</strong></p>
-    <p>📝 ${f.probleme || ""}</p>
-
-    <!-- ╔══════════════════════════════════════╗
-         ║   TARIF – 1 CASE + DISQUETTE        ║
-         ╚══════════════════════════════════════╝ -->
-    <div class="tarifs-row">
-      <span class="emoji">💰</span>
-      <input type="text" id="tarif_${d.id}" class="tarif-input" value="${f.tarifReel || ""}" onblur="euroAuto(this)" placeholder="Montant">
-      <button class="save-icon" title="Enregistrer" onclick="saveTarifs('${d.id}')">💾</button>
+    <div>
+      <button class="edit-btn" onclick="editFiche('${d.id}')">✏️</button>
+      <button class="delete-btn" onclick="supprimer('${d.id}')">🗑</button>
     </div>
   </div>
 
-</div>`;
+  <div class="fiche-content" id="content_${d.id}">
+    <div class="fiche-date">📅 ${new Date(f.date).toLocaleDateString()}</div>
+    <p>📞 ${formatTelAffichage(f.tel)}${f.tel2 ? `<br>📱 ${formatTelAffichage(f.tel2)}` : ""}</p>
+    <p>💻<br>${appareils.replace(/•/g,"🔹")}</p>
+    <p>💾 Sauvegarde : <strong>${sauv}</strong></p>
+    <p>🔐 Mot de passe : <strong>${mdp}</strong></p>
+    <p>🔧 Travaux :<br> <strong>${travaux}</strong></p>
+    <p>📝 ${f.probleme}</p>
+
+    <!-- TARIFS -->
+    <p>💰 Estimation :<br>
+       <input type="text" id="est_${d.id}" class="tarif-input" value="${f.tarifEstimation || ""}">
+    </p>
+
+    <p>✅ Réel :<br>
+       <input type="text" id="reel_${d.id}" class="tarif-input" value="${f.tarifReel || ""}">
+    </p>
+
+    <button class="save-btn" onclick="saveTarifs('${d.id}')">💾 Enregistrer tarifs</button>
+  </div>
+</div>`);
   });
 }
 
-window.supprimer = supprimer;
 load();
 </script>
 
