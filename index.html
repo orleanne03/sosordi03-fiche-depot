@@ -341,7 +341,7 @@ window.creer = creer;
 
 <!-- RECHERCHE CLIENT -->
 <label>Nom du client :</label>
-<input id="nom" class="input" autocomplete="off" oninput="rechercherClientDepuisNom()">
+<input id="nom" class="input" autocomplete="off" oninput="nom.value = nom.value.toUpperCase(); rechercherClientDepuisNom();">
 
 <label>Téléphone :</label>
 <input id="tel" class="input" maxlength="14" inputmode="numeric" oninput="formatTel();rechercherClientDepuisTel();">
