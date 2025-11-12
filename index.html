@@ -22,7 +22,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// CACHE + INDEX TÉLÉPHONE
+// =============================================================
+// CACHE CLIENTS + INDEX TÉLÉPHONE
+// =============================================================
 let clientsCache = [];
 let indexTel = {};
 
@@ -40,30 +42,30 @@ let indexTel = {};
   });
 })();
 
-// AJOUT + FORMAT TÉL
+// =============================================================
+// CLIENTS — RECHERCHE + AJOUT
+// =============================================================
 async function ajouterNouveauClient(){
   let nomSaisi = nom.value.trim().toUpperCase();
   let telSaisi = tel.value.trim().replace(/\D/g,"");
   if(!nomSaisi) return alert("Nom vide.");
   if(!telSaisi) return alert("Téléphone manquant.");
 
-  let snap = await getDocs(collection(db,"clients"));
-  for(let d of snap.docs){
-    let c = d.data();
-    let telClient = (c.tel || "").replace(/\D/g,"");
-    if(c.nom === nomSaisi || telClient === telSaisi){
-      nom.value = nomSaisi;
-      tel.value = telSaisi.replace(/(..)(?=.)/g,"$1-");
-      suggest.style.display="none";
-      alert("⚠️ Ce client existe déjà !");
-      return;
-    }
+  // Vérifie localement si le client existe déjà
+  let existe = clientsCache.some(c => 
+    c.nom === nomSaisi || (c.tel || "").replace(/\D/g,"") === telSaisi
+  );
+  if(existe){
+    nom.value = nomSaisi;
+    tel.value = telSaisi.replace(/(..)(?=.)/g,"$1-");
+    suggest.style.display="none";
+    alert("⚠️ Ce client existe déjà !");
+    return;
   }
 
   let telFormate = telSaisi.replace(/(..)(?=.)/g,"$1-");
 
   await addDoc(collection(db,"clients"),{ nom: nomSaisi, tel: telFormate });
-
   clientsCache.push({ nom: nomSaisi, tel: telFormate });
 
   let prefix = telSaisi.slice(0,3);
@@ -84,8 +86,12 @@ function formatTel(){
   tel.value = v.replace(/(..)(?=.)/g,"$1-");
 }
 
-// RECHERCHE DANS CHAMP NOM
-function rechercherClientDepuisNom(){ rechercherClient(); }
+// =============================================================
+// RECHERCHE PAR NOM
+// =============================================================
+function rechercherClientDepuisNom(){
+  rechercherClient();
+}
 
 function rechercherClient(){
   let input = nom.value.trim();
@@ -97,6 +103,7 @@ function rechercherClient(){
 
   let results = [];
 
+  // Recherche par téléphone
   if(telSearch.length >= 3){
     let prefix = telSearch.slice(0,3);
     let group = indexTel[prefix] || [];
@@ -106,6 +113,7 @@ function rechercherClient(){
     });
   }
 
+  // Recherche par nom
   clientsCache.forEach(c=>{
     if(c.nom && c.nom.toUpperCase().includes(searchUpper)) results.push(c);
   });
@@ -120,6 +128,46 @@ function rechercherClient(){
     }
   });
 
+  afficherSuggestions(uniques);
+}
+window.rechercherClientDepuisNom = rechercherClientDepuisNom;
+
+// =============================================================
+// RECHERCHE PAR TÉLÉPHONE
+// =============================================================
+function rechercherClientDepuisTel(){
+  let input = tel.value.trim();
+  let telSearch = input.replace(/\D/g,"");
+
+  suggest.innerHTML = "";
+  if(telSearch.length < 3){ suggest.style.display="none"; return; }
+
+  let prefix = telSearch.slice(0,3);
+  let group = indexTel[prefix] || [];
+  let results = group.filter(c=>{
+    let telClean = (c.tel || "").replace(/\D/g,"");
+    return telClean.startsWith(telSearch);
+  });
+
+  let uniques = [];
+  let seen = new Set();
+  results.forEach(c=>{
+    let key = c.nom+"|"+c.tel;
+    if(!seen.has(key)){
+      seen.add(key);
+      uniques.push(c);
+    }
+  });
+
+  afficherSuggestions(uniques);
+}
+window.rechercherClientDepuisTel = rechercherClientDepuisTel;
+
+// =============================================================
+// SUGGESTIONS (AFFICHAGE UNIQUE)
+// =============================================================
+function afficherSuggestions(uniques){
+  suggest.innerHTML = "";
   if(uniques.length === 0){
     suggest.innerHTML = `
       <div class="sug" style="color:#b00;">Aucun résultat</div>
@@ -132,24 +180,25 @@ function rechercherClient(){
       </div>`;
     });
   }
-
   suggest.style.display = "block";
 }
-window.rechercherClientDepuisNom = rechercherClientDepuisNom;
 
 function remplirClient(n,t){
   nom.value = n;
   tel.value = t;
-  suggest.style.display = "none";
+  suggest.style.display="none";
 }
 window.remplirClient = remplirClient;
 
+// ferme la boîte de suggestion si on clique ailleurs
 document.addEventListener("click", e=>{
-  if(!e.target.closest("#nom") && !e.target.closest("#suggest"))
+  if(!e.target.closest("#nom") && !e.target.closest("#tel") && !e.target.closest("#suggest"))
     suggest.style.display="none";
 });
 
-// ===================== APPAREILS (inchangé) =====================
+// =============================================================
+// APPAREILS
+// =============================================================
 let appareils = [];
 function ajouterAppareil(){
   appareils.push({ 
@@ -160,6 +209,7 @@ function ajouterAppareil(){
   });
   afficherAppareils();
   modele.value=""; modeleAutre.value=""; serie.value="";
+  majMarques();
 }
 function afficherAppareils(){
   listeAppareils.innerHTML = appareils.map((a,i)=>`
@@ -171,7 +221,6 @@ function afficherAppareils(){
 function supprimerAppareil(i){ appareils.splice(i,1); afficherAppareils(); }
 window.ajouterAppareil = ajouterAppareil;
 
-// MARQUES / SERIES / MODELES
 const marquesParType = {
   "Ordinateur Portable": ["Acer","Asus","HP","Lenovo","Dell","MSI","Samsung","Toshiba","Fujitsu","LG","Autre"],
   "Ordinateur Fixe": ["Assembler","Acer","Asus","HP","Dell","Lenovo","MSI","Autre"],
@@ -219,7 +268,9 @@ function majModeles(){
 }
 window.majModeles = majModeles;
 
-// SAUVEGARDE
+// =============================================================
+// SAUVEGARDE + ENREGISTREMENT
+// =============================================================
 function toggleSauvegarde(){
   const v = document.querySelector('input[name="sauv"]:checked')?.value;
   optionsSauvegarde.style.display = (v === "Oui") ? "block" : "none";
@@ -227,7 +278,6 @@ function toggleSauvegarde(){
 document.querySelectorAll('input[name="sauv"]').forEach(r=>r.addEventListener("change",toggleSauvegarde));
 toggleSauvegarde();
 
-// ENREGISTREMENT FICHE
 async function enregistrer(){
   let s = (serie.value || "").trim();
   let m = (modeleAutre.style.display==="block" ? (modeleAutre.value || "").trim() : (modele.value || "").trim());
@@ -277,24 +327,27 @@ async function creer(){
     date: new Date().toISOString()
   });
 
-  location.href="historique.html";
+  alert("✅ Fiche créée !");
+  setTimeout(()=>location.href="historique.html",500);
 }
 window.creer = creer;
 
 </script>
-
 </head>
 <body>
 
 <div class="container">
 <h1>🖥️ Fiche de Dépôt</h1>
 
+<!-- RECHERCHE CLIENT -->
 <label>Nom du client :</label>
-<input id="nom" class="input" oninput="rechercherClientDepuisNom()">
-<div id="suggest" class="suggest-box"></div>
+<input id="nom" class="input" autocomplete="off" oninput="rechercherClientDepuisNom()">
 
 <label>Téléphone :</label>
-<input id="tel" class="input" maxlength="14" oninput="formatTel();">
+<input id="tel" class="input" maxlength="14" inputmode="numeric" oninput="formatTel();rechercherClientDepuisTel();">
+
+<!-- boîte de suggestion sous les deux champs -->
+<div id="suggest" class="suggest-box"></div>
 
 <label>Couleur :</label>
 <select id="couleur" class="input">
@@ -309,7 +362,7 @@ window.creer = creer;
 <label>Mot de passe :</label>
 <input id="mdp" class="input">
 
-<!-- ======= MATÉRIEL DÉPOSÉ ======= -->
+<!-- MATÉRIEL DÉPOSÉ -->
 <div class="card-block">
 <label>Ajouter un appareil :</label>
 <div class="grid-3">
@@ -368,12 +421,12 @@ window.creer = creer;
 
 <div style="display:flex; gap:20px; align-items:center; margin-top:8px;">
   <label style="display:flex; align-items:center; gap:6px;">
-    <input type="radio" name="sauv" id="sauvNon" value="Non" checked>
+    <input type="radio" name="sauv" value="Non" checked>
     Non
   </label>
 
   <label style="display:flex; align-items:center; gap:6px;">
-    <input type="radio" name="sauv" id="sauvOui" value="Oui">
+    <input type="radio" name="sauv" value="Oui">
     Oui
   </label>
 </div>
@@ -383,7 +436,7 @@ window.creer = creer;
   <label><input type="checkbox" name="sauv-item" value="Images"> Images</label><br>
   <label><input type="checkbox" name="sauv-item" value="Vidéos"> Vidéos</label><br>
   <label><input type="checkbox" name="sauv-item" value="Favoris"> Favoris</label><br>
-  <label><input type="checkbox" name="sauv-item" value="Mots de passe"> Mots de passe</label><br>
+  <label><input type="checkbox" name="sauv-item" value="Mots de passe"> Motsde passe</label><br>
 </div>
 </div>
 
@@ -413,7 +466,7 @@ window.creer = creer;
 
 <button class="primary" onclick="creer()">Créer la fiche</button>
 
-<!-- ✅ LE LIEN EST MAINTENANT EN BAS -->
+<!-- ✅ LIEN HISTORIQUE EN BAS -->
 <div class="center" style="margin-top:20px;">
   <a href="historique.html" class="link">📚 Voir l'historique</a>
 </div>
