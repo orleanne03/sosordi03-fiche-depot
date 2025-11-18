@@ -71,6 +71,17 @@ h1 {
   color: white;
   border-radius: 5px;
 }
+
+/* ⭐ Nouveau : badge HS OK */
+.fiche-header-left .badge-hs {
+  font-size: 11px;
+  padding: 2px 5px;
+  margin-left: 5px;
+  background: #ff80b3;
+  color: white;
+  border-radius: 5px;
+}
+
 .delete-btn, .edit-btn {
   background: none;
   border: none;
@@ -120,8 +131,8 @@ h1 {
   align-items: center;
   gap: 6px;
 }
-.repare-btn.ok { background: #28a745; }   /* vert */
-.repare-btn.nok { background: #d33; }     /* rouge */
+.repare-btn.ok { background: #28a745; }
+.repare-btn.nok { background: #d33; }
 .repare-btn:hover { opacity: 0.9; }
 
 .center {
@@ -133,10 +144,35 @@ h1 {
   color: #333;
   font-weight: bold;
 }
+
 .fiche-card.reparee {
   opacity: 0.9;
   border-left: 6px solid #4caf50;
 }
+
+/* 🌸 Bandeau rosé + fond rosé si HS OK */
+.fiche-card.hs {
+  border-left: 6px solid #ff80b3;
+  background: #ffe6f2;
+}
+.fiche-card.hs .fiche-header {
+  background: #ffd1e5 !important;
+  border-left: 6px solid #ff80b3;
+}
+
+/* 🌸 Bouton HS Changement */
+.hs-btn {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: #ff80b3;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 15px;
+}
+.hs-btn:hover { opacity: 0.9; }
 </style>
 
 <script type="module">
@@ -262,6 +298,18 @@ async function toggleRepare(id, etat) {
 }
 window.toggleRepare = toggleRepare;
 
+/* ⭐ Nouveau : état HS changement */
+async function toggleHS(id, etat) {
+  try {
+    await updateDoc(doc(db, "fiches", id), { hsChangement: etat });
+    alert(etat ? "Fiche marquée HS Changement OK 🔧" : "État HS Changement retiré ❌");
+    location.reload();
+  } catch (e) {
+    alert("Erreur : " + e.message);
+  }
+}
+window.toggleHS = toggleHS;
+
 async function load() {
   let snap = await getDocs(query(collection(db, "fiches"), orderBy("date", "desc")));
   let zone = document.getElementById("liste");
@@ -274,7 +322,9 @@ async function load() {
     let mdp = f.motdepasse && f.motdepasse.trim() ? f.motdepasse : "Non renseigné";
 
     zone.insertAdjacentHTML("beforeend", `
-<div class="fiche-card accordion-card ${f.repare ? 'reparee' : ''}">
+<div class="fiche-card accordion-card
+     ${f.repare ? 'reparee' : ''}
+     ${f.hsChangement ? 'hs' : ''}">
   <div class="fiche-header">
     <div class="fiche-header-left">
       <span class="color-tag" style="background:${f.couleur || 'transparent'}"></span>
@@ -285,6 +335,7 @@ async function load() {
           📞 ${formatTelAffichage(f.tel)}<br>
           💻 ${(f.appareils && f.appareils[0]) ? `${f.appareils[0].type} — ${f.appareils[0].marque}` : "—"}
           ${f.repare ? '<span class="badge">Réparé</span>' : ''}
+          ${f.hsChangement ? '<span class="badge-hs">HS OK</span>' : ''}
         </small>
       </div>
     </div>
@@ -312,9 +363,15 @@ async function load() {
     </p>
 
     <button class="save-btn" onclick="saveTarifs('${d.id}')">💾 Enregistrer tarifs</button>
+
     <button class="repare-btn ${f.repare ? 'nok' : 'ok'}" onclick="toggleRepare('${d.id}', ${f.repare ? 'false' : 'true'})">
       ${f.repare ? '❌ Marquer non réparé' : '✅ Marquer réparé'}
     </button>
+
+    <button class="hs-btn" onclick="toggleHS('${d.id}', ${f.hsChangement ? 'false' : 'true'})">
+      ${f.hsChangement ? '❌ Annuler HS Changement' : '🔧 HS Changement OK'}
+    </button>
+
   </div>
 </div>`);
   });
