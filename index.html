@@ -205,7 +205,8 @@ function ajouterAppareil(){
     type:type.value, 
     marque:marque.value, 
     serie:serie.value || "", 
-    modele:(modeleAutre.style.display==="block" ? modeleAutre.value : modele.value)
+    modele: modele.value
+
   });
   afficherAppareils();
   modele.value=""; modeleAutre.value=""; serie.value="";
@@ -291,12 +292,7 @@ async function enregistrer(){
     }
   }
 
-  let key = mk+"__"+(s || "");
-  if(!modelesParSerie[key]) modelesParSerie[key] = [];
-  if(m && !modelesParSerie[key].includes(m)){
-    modelesParSerie[key].push(m);
-    await setDoc(doc(db,"modeles",key), { liste:modelesParSerie[key] });
-  }
+ 
 }
 
 async function creer(){
@@ -381,10 +377,10 @@ window.creer = creer;
   </div>
 
 <div>
-  <label>Modèle :</label>
-  <select id="modele" class="input"></select>
-  <input id="modeleAutre" class="input" placeholder="Saisir modèle" style="display:none;margin-top:6px;">
+  <label>Modèle (saisie manuelle) :</label>
+  <input id="modele" class="input" placeholder="Ex : Inspiron 15, A515-56, etc.">
 </div>
+
 
 <script>
   // ✅ Surveille les changements de sélection du menu "modele"
