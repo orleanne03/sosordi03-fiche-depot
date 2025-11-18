@@ -71,8 +71,6 @@ h1 {
   color: white;
   border-radius: 5px;
 }
-
-/* ⭐ Badge HS OK */
 .fiche-header-left .badge-hs {
   font-size: 11px;
   padding: 2px 5px;
@@ -81,7 +79,6 @@ h1 {
   color: white;
   border-radius: 5px;
 }
-
 .delete-btn, .edit-btn {
   background: none;
   border: none;
@@ -131,8 +128,8 @@ h1 {
   align-items: center;
   gap: 6px;
 }
-.repare-btn.ok { background: #28a745; }
-.repare-btn.nok { background: #d33; }
+.repare-btn.ok { background: #28a745; }   /* vert */
+.repare-btn.nok { background: #d33; }     /* rouge */
 .repare-btn:hover { opacity: 0.9; }
 
 .center {
@@ -143,6 +140,16 @@ h1 {
   text-decoration: none;
   color: #333;
   font-weight: bold;
+}
+
+/* 🟢 Mode réparé vert pâle */
+.fiche-card.reparee {
+  background: #e6ffe6;
+  border-left: 6px solid #4caf50;
+}
+.fiche-card.reparee .fiche-header {
+  background: #d2f8d2 !important;
+  border-left: 6px solid #4caf50;
 }
 
 /* 🌸 Mode HS Changement */
@@ -169,16 +176,65 @@ h1 {
 }
 .hs-btn:hover { opacity: 0.9; }
 
-/* 🟢 MODE REPARÉ — AJOUT DEMANDÉ (vert pâle) */
-.fiche-card.reparee {
-  background: #e6ffe6;             /* vert très pâle */
-  border-left: 6px solid #4caf50;  /* garde ta bordure verte */
+/* Champ date récupération */
+.recup-block {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.recup-block input[type="date"] {
+  padding: 4px;
+  border-radius: 4px;
+  border: 1px solid #aaa;
+}
+.double-col {
+  display: flex;
+  gap: 15px;
+  margin-top: 15px;
 }
 
-.fiche-card.reparee .fiche-header {
-  background: #d2f8d2 !important;  /* bandeau vert clair */
-  border-left: 6px solid #4caf50;
+.col {
+  width: 50%;
+  background: #ffffff;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
+
+.col h3 {
+  margin: 0 0 8px 0;
+  font-size: 15px;
+  font-weight: bold;
+  color: #333;
+}
+
+.col label {
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.input-small {
+  width: 100%;
+  padding: 7px;
+  border-radius: 5px;
+  border: 1px solid #bbb;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.col .save-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+
 </style>
 
 <script type="module">
@@ -233,35 +289,35 @@ async function editFiche(id) {
 
   const zone = document.getElementById("content_" + id);
   zone.innerHTML = `
-    <label>Nom :
+    <label>Nom : 
       <input type="text" id="nom_${id}" value="${docData.nom || ''}" class="tarif-input">
     </label><br>
 
-    <label>Téléphone principal :
+    <label>Téléphone principal : 
       <input type="text" id="tel_${id}" value="${docData.tel || ''}" class="tarif-input">
     </label><br>
 
-    <label>Téléphone secondaire :
+    <label>Téléphone secondaire : 
       <input type="text" id="tel2_${id}" value="${docData.tel2 || ''}" class="tarif-input">
     </label><br>
 
-    <label>Mot de passe :
+    <label>Mot de passe : 
       <input type="text" id="mdp_${id}" value="${docData.motdepasse || ''}" class="tarif-input">
     </label><br>
 
-    <label>Problème :
+    <label>Problème : 
       <textarea id="prob_${id}" rows="3" class="tarif-input">${docData.probleme || ''}</textarea>
     </label><br>
 
-    <label>Travaux :
+    <label>Travaux : 
       <textarea id="trav_${id}" rows="3" class="tarif-input">${(docData.travaux || []).join(", ")}</textarea>
     </label><br>
 
-    <label>Tarif estimation :
+    <label>Tarif estimation : 
       <input type="text" id="est_${id}" value="${docData.tarifEstimation || ''}" class="tarif-input">
     </label><br>
 
-    <label>Tarif réel :
+    <label>Tarif réel : 
       <input type="text" id="reel_${id}" value="${docData.tarifReel || ''}" class="tarif-input">
     </label><br>
 
@@ -304,7 +360,6 @@ async function toggleRepare(id, etat) {
 }
 window.toggleRepare = toggleRepare;
 
-/* ⭐ HS Changement */
 async function toggleHS(id, etat) {
   try {
     await updateDoc(doc(db, "fiches", id), { hsChangement: etat });
@@ -316,6 +371,26 @@ async function toggleHS(id, etat) {
 }
 window.toggleHS = toggleHS;
 
+/* 👉 SAUVEGARDER DATE + HEURE DE RÉCUPÉRATION */
+async function saveRecuperationDate(id) {
+  const dateValue = document.getElementById("recup_" + id).value;
+  const timeValue = document.getElementById("recupTime_" + id).value;
+
+  try {
+    await updateDoc(doc(db, "fiches", id), {
+      dateRecuperation: dateValue || "",
+      dateRecuperationHeure: timeValue || ""
+    });
+
+    alert("Date et heure de récupération enregistrées ✅");
+    location.reload();
+
+  } catch (e) {
+    alert("Erreur : " + e.message);
+  }
+}
+window.saveRecuperationDate = saveRecuperationDate;
+
 async function load() {
   let snap = await getDocs(query(collection(db, "fiches"), orderBy("date", "desc")));
   let zone = document.getElementById("liste");
@@ -326,6 +401,18 @@ async function load() {
     let sauv = (f.sauvegarde === "Oui") ? `Oui (${(f.sauvegardeItems || []).join(", ")})` : "Non";
     let travaux = (f.travaux?.length) ? f.travaux.join("<br>") : "Aucun";
     let mdp = f.motdepasse && f.motdepasse.trim() ? f.motdepasse : "Non renseigné";
+
+    // Préparer la valeur de l'input date (yyyy-mm-dd)
+    let recupValue = "";
+    if (f.dateRecuperation) {
+      const dRec = new Date(f.dateRecuperation);
+      if (!isNaN(dRec)) {
+        const year = dRec.getFullYear();
+        const month = String(dRec.getMonth() + 1).padStart(2,"0");
+        const day = String(dRec.getDate()).padStart(2,"0");
+        recupValue = `${year}-${month}-${day}`;
+      }
+    }
 
     zone.insertAdjacentHTML("beforeend", `
 <div class="fiche-card accordion-card
@@ -354,21 +441,48 @@ async function load() {
   <div class="fiche-content" id="content_${d.id}">
     <div class="fiche-date">📅 ${new Date(f.date).toLocaleDateString()}</div>
     <p>📞 ${formatTelAffichage(f.tel)}${f.tel2 ? `<br>📱 ${formatTelAffichage(f.tel2)}` : ""}</p>
+
+    ${f.dateRecuperation ? `<p>📦 Récupérée le : <strong>${new Date(f.dateRecuperation).toLocaleDateString()}</strong></p>` : ""}
+
     <p>💻<br>${appareils.replace(/•/g, "🔹")}</p>
     <p>💾 Sauvegarde : <strong>${sauv}</strong></p>
     <p>🔐 Mot de passe : <strong>${mdp}</strong></p>
     <p>🔧 Travaux :<br> <strong>${travaux}</strong></p>
     <p>📝 ${f.probleme}</p>
 
-    <p>💰 Estimation :<br>
-       <input type="text" id="est_${d.id}" class="tarif-input" value="${f.tarifEstimation || ""}">
-    </p>
+    <div class="double-col">
 
-    <p>✅ Réel :<br>
-       <input type="text" id="reel_${d.id}" class="tarif-input" value="${f.tarifReel || ""}">
-    </p>
+<!-- TARIFS -->
+<div class="col">
+  <h3>Tarifs</h3>
 
-    <button class="save-btn" onclick="saveTarifs('${d.id}')">💾 Enregistrer tarifs</button>
+  <label>💰 Estimation :</label>
+  <input type="text" id="est_${d.id}" class="input-small" value="${f.tarifEstimation || ""}">
+
+  <label>✅ Réel :</label>
+  <input type="text" id="reel_${d.id}" class="input-small" value="${f.tarifReel || ""}">
+
+  <button class="save-btn" onclick="saveTarifs('${d.id}')">💾 Enregistrer tarifs</button>
+</div>
+
+<!-- RÉCUPÉRATION -->
+<div class="col">
+  <h3>Récupération client</h3>
+
+  <label>📆 Date :</label>
+  <input type="date" id="recup_${d.id}" class="input-small" value="${recupValue}">
+
+  <label>⏰ Heure :</label>
+  <input type="time" id="recupTime_${d.id}" class="input-small" value="${f.dateRecuperationHeure || ""}">
+
+  <button class="save-btn" onclick="saveRecuperationDate('${d.id}')">💾 Enregistrer récupération</button>
+</div>
+
+</div>
+
+
+
+
 
     <button class="repare-btn ${f.repare ? 'nok' : 'ok'}" onclick="toggleRepare('${d.id}', ${f.repare ? 'false' : 'true'})">
       ${f.repare ? '❌ Marquer non réparé' : '✅ Marquer réparé'}
