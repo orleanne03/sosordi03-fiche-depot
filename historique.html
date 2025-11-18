@@ -72,7 +72,7 @@ h1 {
   border-radius: 5px;
 }
 
-/* ⭐ Nouveau : badge HS OK */
+/* ⭐ Badge HS OK */
 .fiche-header-left .badge-hs {
   font-size: 11px;
   padding: 2px 5px;
@@ -145,12 +145,7 @@ h1 {
   font-weight: bold;
 }
 
-.fiche-card.reparee {
-  opacity: 0.9;
-  border-left: 6px solid #4caf50;
-}
-
-/* 🌸 Bandeau rosé + fond rosé si HS OK */
+/* 🌸 Mode HS Changement */
 .fiche-card.hs {
   border-left: 6px solid #ff80b3;
   background: #ffe6f2;
@@ -160,7 +155,7 @@ h1 {
   border-left: 6px solid #ff80b3;
 }
 
-/* 🌸 Bouton HS Changement */
+/* 🌸 Bouton HS */
 .hs-btn {
   margin-top: 8px;
   padding: 8px 12px;
@@ -173,6 +168,17 @@ h1 {
   font-size: 15px;
 }
 .hs-btn:hover { opacity: 0.9; }
+
+/* 🟢 MODE REPARÉ — AJOUT DEMANDÉ (vert pâle) */
+.fiche-card.reparee {
+  background: #e6ffe6;             /* vert très pâle */
+  border-left: 6px solid #4caf50;  /* garde ta bordure verte */
+}
+
+.fiche-card.reparee .fiche-header {
+  background: #d2f8d2 !important;  /* bandeau vert clair */
+  border-left: 6px solid #4caf50;
+}
 </style>
 
 <script type="module">
@@ -227,35 +233,35 @@ async function editFiche(id) {
 
   const zone = document.getElementById("content_" + id);
   zone.innerHTML = `
-    <label>Nom : 
+    <label>Nom :
       <input type="text" id="nom_${id}" value="${docData.nom || ''}" class="tarif-input">
     </label><br>
 
-    <label>Téléphone principal : 
+    <label>Téléphone principal :
       <input type="text" id="tel_${id}" value="${docData.tel || ''}" class="tarif-input">
     </label><br>
 
-    <label>Téléphone secondaire : 
+    <label>Téléphone secondaire :
       <input type="text" id="tel2_${id}" value="${docData.tel2 || ''}" class="tarif-input">
     </label><br>
 
-    <label>Mot de passe : 
+    <label>Mot de passe :
       <input type="text" id="mdp_${id}" value="${docData.motdepasse || ''}" class="tarif-input">
     </label><br>
 
-    <label>Problème : 
+    <label>Problème :
       <textarea id="prob_${id}" rows="3" class="tarif-input">${docData.probleme || ''}</textarea>
     </label><br>
 
-    <label>Travaux : 
+    <label>Travaux :
       <textarea id="trav_${id}" rows="3" class="tarif-input">${(docData.travaux || []).join(", ")}</textarea>
     </label><br>
 
-    <label>Tarif estimation : 
+    <label>Tarif estimation :
       <input type="text" id="est_${id}" value="${docData.tarifEstimation || ''}" class="tarif-input">
     </label><br>
 
-    <label>Tarif réel : 
+    <label>Tarif réel :
       <input type="text" id="reel_${id}" value="${docData.tarifReel || ''}" class="tarif-input">
     </label><br>
 
@@ -298,7 +304,7 @@ async function toggleRepare(id, etat) {
 }
 window.toggleRepare = toggleRepare;
 
-/* ⭐ Nouveau : état HS changement */
+/* ⭐ HS Changement */
 async function toggleHS(id, etat) {
   try {
     await updateDoc(doc(db, "fiches", id), { hsChangement: etat });
