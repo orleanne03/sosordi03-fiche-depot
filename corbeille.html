@@ -241,7 +241,8 @@ h1 {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, orderBy, query, deleteDoc, doc, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, orderBy, query, deleteDoc, doc, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
 
 
 
@@ -291,6 +292,48 @@ async function supprimer(id) {
     alert("Erreur lors de la suppression : " + e.message);
   }
 }
+// ♻️ RESTAURER
+async function restaurer(id) {
+  if (!confirm("Restaurer cette fiche ?")) return;
+
+  try {
+    const ref = doc(db, "fiches_supprimees", id);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) {
+      alert("Fiche introuvable");
+      return;
+    }
+
+    const data = snap.data();
+    delete data.dateSuppression;
+
+    await setDoc(doc(db, "fiches", id), data);
+    await deleteDoc(ref);
+
+    alert("Fiche restaurée ✅");
+    location.reload();
+
+  } catch (e) {
+    alert("Erreur : " + e.message);
+  }
+}
+
+// ❌ SUPPRESSION DÉFINITIVE
+async function supprimerDefinitif(id) {
+  if (!confirm("Supprimer définitivement cette fiche ?")) return;
+
+  try {
+    await deleteDoc(doc(db, "fiches_supprimees", id));
+    alert("Fiche supprimée définitivement ❌");
+    location.reload();
+  } catch (e) {
+    alert("Erreur : " + e.message);
+  }
+}
+
+window.restaurer = restaurer;
+window.supprimerDefinitif = supprimerDefinitif;
 
 
 async function saveTarifs(id) {
@@ -472,7 +515,9 @@ let accessoiresAutres = f.accessoiresAutres && f.accessoiresAutres.trim()
     </div>
     <div>
       <button class="edit-btn" onclick="editFiche('${d.id}')">✏️</button>
-      <button class="delete-btn" onclick="supprimer('${d.id}')">🗑</button>
+<button class="delete-btn" onclick="restaurer('${d.id}')">♻️</button>
+<button class="delete-btn" onclick="supprimerDefinitif('${d.id}')">🗑</button>
+
     </div>
   </div>
 
