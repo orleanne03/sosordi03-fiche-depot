@@ -401,6 +401,14 @@ async function load() {
     let sauv = (f.sauvegarde === "Oui") ? `Oui (${(f.sauvegardeItems || []).join(", ")})` : "Non";
     let travaux = (f.travaux?.length) ? f.travaux.join("<br>") : "Aucun";
     let mdp = f.motdepasse && f.motdepasse.trim() ? f.motdepasse : "Non renseigné";
+    let accessoires = (f.accessoires?.length)
+  ? f.accessoires.join("<br>")
+  : "Aucun";
+
+let accessoiresAutres = f.accessoiresAutres && f.accessoiresAutres.trim()
+  ? f.accessoiresAutres
+  : "";
+
 
     // Préparer la valeur de l'input date (yyyy-mm-dd)
     let recupValue = "";
@@ -448,9 +456,16 @@ async function load() {
 
     <p>💻<br>${appareils.replace(/•/g, "🔹")}</p>
     <p>💾 Sauvegarde : <strong>${sauv}</strong></p>
-    <p>🔐 Mot de passe : <strong>${mdp}</strong></p>
-    <p>🔧 Travaux :<br> <strong>${travaux}</strong></p>
-    <p>📝 ${f.probleme}</p>
+<p>🔐 Mot de passe : <strong>${mdp}</strong></p>
+
+<p>🎒 Accessoires :<br>
+<strong>${accessoires}</strong>
+${accessoiresAutres ? `<br><em>Autres : ${accessoiresAutres}</em>` : ""}
+</p>
+
+<p>🔧 Travaux :<br> <strong>${travaux}</strong></p>
+<p>📝 ${f.probleme}</p>
+
 
     <div class="double-col">
 
