@@ -514,7 +514,7 @@ let accessoiresAutres = f.accessoiresAutres && f.accessoiresAutres.trim()
       </div>
     </div>
     <div>
-      <button class="edit-btn" onclick="editFiche('${d.id}')">✏️</button>
+
 <button class="delete-btn" onclick="restaurer('${d.id}')">♻️</button>
 <button class="delete-btn" onclick="supprimerDefinitif('${d.id}')">🗑</button>
 
@@ -567,7 +567,8 @@ document.addEventListener("click", function(e) {
 
 <body class="history-page">
 <h1>Archives</h1>
-    <a href="index.html" 
+  <div style="text-align:center; margin:30px;">
+  <a href="index.html" 
      style="text-decoration:none; padding:10px 15px; background:#333; color:white; border-radius:6px;">
      🏠 Menu principal
   </a>
