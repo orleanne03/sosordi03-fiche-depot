@@ -471,31 +471,7 @@ ${accessoiresAutres ? `<br><em>Autres : ${accessoiresAutres}</em>` : ""}
 
     <div class="double-col">
 
-<!-- TARIFS -->
-<div class="col">
-  <h3>Tarifs</h3>
 
-  <label>💰 Estimation :</label>
-  <input type="text" id="est_${d.id}" class="input-small" value="${f.tarifEstimation || ""}">
-
-  <label>✅ Réel :</label>
-  <input type="text" id="reel_${d.id}" class="input-small" value="${f.tarifReel || ""}">
-
-  <button class="save-btn" onclick="saveTarifs('${d.id}')">💾 Enregistrer tarifs</button>
-</div>
-
-<!-- RÉCUPÉRATION -->
-<div class="col">
-  <h3>Récupération client</h3>
-
-  <label>📆 Date :</label>
-  <input type="date" id="recup_${d.id}" class="input-small" value="${recupValue}">
-
-  <label>⏰ Heure :</label>
-  <input type="time" id="recupTime_${d.id}" class="input-small" value="${f.dateRecuperationHeure || ""}">
-
-  <button class="save-btn" onclick="saveRecuperationDate('${d.id}')">💾 Enregistrer récupération</button>
-</div>
 
 </div>
 
