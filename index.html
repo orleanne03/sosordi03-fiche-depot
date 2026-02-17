@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Menu principal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+body{
+  font-family: Arial;
+  background:#f2f2f2;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  margin:0;
+}
+
+.menu{
+  display:flex;
+  flex-direction:column;
+  gap:20px;
+  width:280px;
+}
+
+.menu a{
+  text-decoration:none;
+  padding:15px;
+  text-align:center;
+  font-size:18px;
+  border-radius:8px;
+  color:white;
+  font-weight:bold;
+}
+
+.nouvelle{ background:#4caf50; }
+.historique{ background:#2196f3; }
+.corbeille{ background:#f44336; }
+
+.menu a:hover{
+  opacity:0.9;
+}
+</style>
+</head>
+
+<body>
+
+<div class="menu">
+  <a href="nouvelle.html" class="nouvelle">➕ Nouvelle fiche</a>
+  <a href="historique.html" class="historique">📚 Historique</a>
+  <a href="corbeille.html" class="corbeille">🗑 Corbeille</a>
+</div>
+
+</body>
+</html>
