@@ -241,7 +241,9 @@ h1 {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, orderBy, query, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, orderBy, query, deleteDoc, doc, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+
 
 const firebaseConfig = {
   apiKey: "AIzaSyAR8PVlerANOGdzNBwZjj81I6Ajtbn63eI",
@@ -260,13 +262,36 @@ function formatTelAffichage(t) {
 
 async function supprimer(id) {
   if (!confirm("Supprimer cette fiche ?")) return;
+
   try {
-    await deleteDoc(doc(db, "fiches", id));
+    // 1) Lire la fiche avant suppression
+    const ref = doc(db, "fiches", id);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) {
+      alert("Fiche introuvable");
+      return;
+    }
+
+    const data = snap.data();
+
+    // 2) Copier la fiche dans une autre collection (corbeille)
+    await setDoc(doc(db, "fiches_supprimees", id), {
+      ...data,
+      dateSuppression: new Date().toISOString()
+    });
+
+    // 3) Supprimer la fiche originale
+    await deleteDoc(ref);
+
+    alert("Fiche supprimée + archivée ✅");
     location.reload();
+
   } catch (e) {
     alert("Erreur lors de la suppression : " + e.message);
   }
 }
+
 
 async function saveTarifs(id) {
   let estimation = document.getElementById("est_" + id).value.trim();
