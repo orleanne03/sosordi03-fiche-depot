@@ -1,1 +1,538 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Historique des dépôts</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f2f2f2;
+  margin: 0;
+  padding: 0;
+}
+h1 {
+  text-align: center;
+  margin: 20px 0;
+}
+.history-container {
+  max-width: 700px;
+  margin: auto;
+  padding: 10px;
+}
+.fiche-card {
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  overflow: hidden;
+  border: 1px solid #ddd;
+  transition: 0.3s;
+}
+.fiche-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px;
+  background: #eee;
+  cursor: pointer;
+  align-items: center;
+}
+.fiche-header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+.color-tag {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1px solid #0003;
+  margin-top: 4px;
+}
+.fiche-summary {
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  line-height: 1.3em;
+}
+.fiche-header-left strong {
+  font-size: 15px;
+  text-transform: uppercase;
+}
+.fiche-header small {
+  color: #555;
+}
+.fiche-header-left .badge {
+  font-size: 11px;
+  padding: 2px 5px;
+  margin-left: 5px;
+  background: #4caf50;
+  color: white;
+  border-radius: 5px;
+}
+.fiche-header-left .badge-hs {
+  font-size: 11px;
+  padding: 2px 5px;
+  margin-left: 5px;
+  background: #ff80b3;
+  color: white;
+  border-radius: 5px;
+}
+.delete-btn, .edit-btn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+.fiche-content {
+  display: none;
+  padding: 10px;
+  line-height: 1.5em;
+}
+.fiche-card.open .fiche-content { display: block; }
+
+.tarif-input {
+  width: 100%;
+  padding: 5px;
+  border: 1px solid #aaa;
+  border-radius: 5px;
+  margin-top: 4px;
+  box-sizing: border-box;
+}
+.save-btn {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: #2c7;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.save-btn:hover { opacity: 0.9; }
+
+.repare-btn {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.repare-btn.ok { background: #28a745; }   /* vert */
+.repare-btn.nok { background: #d33; }     /* rouge */
+.repare-btn:hover { opacity: 0.9; }
+
+.center {
+  text-align: center;
+  margin: 20px;
+}
+.return-link {
+  text-decoration: none;
+  color: #333;
+  font-weight: bold;
+}
+
+/* 🟢 Mode réparé vert pâle */
+.fiche-card.reparee {
+  background: #e6ffe6;
+  border-left: 6px solid #4caf50;
+}
+.fiche-card.reparee .fiche-header {
+  background: #d2f8d2 !important;
+  border-left: 6px solid #4caf50;
+}
+
+/* 🌸 Mode HS Changement */
+.fiche-card.hs {
+  border-left: 6px solid #ff80b3;
+  background: #ffe6f2;
+}
+.fiche-card.hs .fiche-header {
+  background: #ffd1e5 !important;
+  border-left: 6px solid #ff80b3;
+}
+
+/* 🌸 Bouton HS */
+.hs-btn {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: #ff80b3;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 15px;
+}
+.hs-btn:hover { opacity: 0.9; }
+
+/* Champ date récupération */
+.recup-block {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.recup-block input[type="date"] {
+  padding: 4px;
+  border-radius: 4px;
+  border: 1px solid #aaa;
+}
+.double-col {
+  display: flex;
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.col {
+  width: 50%;
+  background: #ffffff;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.col h3 {
+  margin: 0 0 8px 0;
+  font-size: 15px;
+  font-weight: bold;
+  color: #333;
+}
+
+.col label {
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.input-small {
+  width: 100%;
+  padding: 7px;
+  border-radius: 5px;
+  border: 1px solid #bbb;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+.col .save-btn {
+  width: 100%;
+  justify-content: center;
+}
+.fiche-content strong {
+    color: red;
+}
+
+</style>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, orderBy, query, deleteDoc, doc, updateDoc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAR8PVlerANOGdzNBwZjj81I6Ajtbn63eI",
+  authDomain: "sosordi03-sav.firebaseapp.com",
+  projectId: "sosordi03-sav"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+function formatTelAffichage(t) {
+  if (!t) return "";
+  let clean = t.replace(/\D/g, "");
+  return clean.replace(/(..)(?=(..)+$)/g, "$1-");
+}
+
+async function supprimer(id) {
+  if (!confirm("Supprimer cette fiche ?")) return;
+
+  try {
+    // 1) Lire la fiche avant suppression
+    const ref = doc(db, "fiches", id);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) {
+      alert("Fiche introuvable");
+      return;
+    }
+
+    const data = snap.data();
+
+    // 2) Copier la fiche dans une autre collection (corbeille)
+    await setDoc(doc(db, "fiches_supprimees", id), {
+      ...data,
+      dateSuppression: new Date().toISOString()
+    });
+
+    // 3) Supprimer la fiche originale
+    await deleteDoc(ref);
+
+    alert("Fiche supprimée + archivée ✅");
+    location.reload();
+
+  } catch (e) {
+    alert("Erreur lors de la suppression : " + e.message);
+  }
+}
+
+
+async function saveTarifs(id) {
+  let estimation = document.getElementById("est_" + id).value.trim();
+  let reel = document.getElementById("reel_" + id).value.trim();
+  try {
+    await updateDoc(doc(db, "fiches", id), {
+      tarifEstimation: estimation || "",
+      tarifReel: reel || ""
+    });
+    alert("Tarifs mis à jour ✅");
+  } catch (e) {
+    alert("Erreur : " + e.message);
+  }
+}
+window.saveTarifs = saveTarifs;
+window.supprimer = supprimer;
+
+async function editFiche(id) {
+  const snap = await getDocs(query(collection(db, "fiches")));
+  const docData = snap.docs.find(d => d.id === id)?.data();
+  if (!docData) return alert("Fiche introuvable");
+
+  const zone = document.getElementById("content_" + id);
+  zone.innerHTML = `
+    <label>Nom : 
+      <input type="text" id="nom_${id}" value="${docData.nom || ''}" class="tarif-input">
+    </label><br>
+
+    <label>Téléphone principal : 
+      <input type="text" id="tel_${id}" value="${docData.tel || ''}" class="tarif-input">
+    </label><br>
+
+    <label>Téléphone secondaire : 
+      <input type="text" id="tel2_${id}" value="${docData.tel2 || ''}" class="tarif-input">
+    </label><br>
+
+    <label>Mot de passe : 
+      <input type="text" id="mdp_${id}" value="${docData.motdepasse || ''}" class="tarif-input">
+    </label><br>
+
+    <label>Problème : 
+      <textarea id="prob_${id}" rows="3" class="tarif-input">${docData.probleme || ''}</textarea>
+    </label><br>
+
+    <label>Travaux : 
+      <textarea id="trav_${id}" rows="3" class="tarif-input">${(docData.travaux || []).join(", ")}</textarea>
+    </label><br>
+
+    <label>Tarif estimation : 
+      <input type="text" id="est_${id}" value="${docData.tarifEstimation || ''}" class="tarif-input">
+    </label><br>
+
+    <label>Tarif réel : 
+      <input type="text" id="reel_${id}" value="${docData.tarifReel || ''}" class="tarif-input">
+    </label><br>
+
+    <button class="save-btn" onclick="saveFiche('${id}')">💾 Sauvegarder</button>
+    <button class="save-btn" style="background:#aaa" onclick="location.reload()">❌ Annuler</button>
+  `;
+}
+window.editFiche = editFiche;
+
+async function saveFiche(id) {
+  const data = {
+    nom: document.getElementById("nom_" + id).value.trim(),
+    tel: document.getElementById("tel_" + id).value.trim(),
+    tel2: document.getElementById("tel2_" + id).value.trim(),
+    motdepasse: document.getElementById("mdp_" + id).value.trim(),
+    probleme: document.getElementById("prob_" + id).value.trim(),
+    travaux: document.getElementById("trav_" + id).value.split(",").map(x => x.trim()).filter(x => x),
+    tarifEstimation: document.getElementById("est_" + id).value.trim(),
+    tarifReel: document.getElementById("reel_" + id).value.trim()
+  };
+
+  try {
+    await updateDoc(doc(db, "fiches", id), data);
+    alert("Fiche mise à jour ✅");
+    location.reload();
+  } catch (e) {
+    alert("Erreur : " + e.message);
+  }
+}
+window.saveFiche = saveFiche;
+
+async function toggleRepare(id, etat) {
+  try {
+    await updateDoc(doc(db, "fiches", id), { repare: etat });
+    alert(etat ? "Fiche marquée comme réparée ✅" : "Fiche marquée comme non réparée ❌");
+    location.reload();
+  } catch (e) {
+    alert("Erreur : " + e.message);
+  }
+}
+window.toggleRepare = toggleRepare;
+
+async function toggleHS(id, etat) {
+  try {
+    await updateDoc(doc(db, "fiches", id), { hsChangement: etat });
+    alert(etat ? "Fiche marquée HS Changement OK 🔧" : "État HS Changement retiré ❌");
+    location.reload();
+  } catch (e) {
+    alert("Erreur : " + e.message);
+  }
+}
+window.toggleHS = toggleHS;
+
+/* 👉 SAUVEGARDER DATE + HEURE DE RÉCUPÉRATION */
+async function saveRecuperationDate(id) {
+  const dateValue = document.getElementById("recup_" + id).value;
+  const timeValue = document.getElementById("recupTime_" + id).value;
+
+  try {
+    await updateDoc(doc(db, "fiches", id), {
+      dateRecuperation: dateValue || "",
+      dateRecuperationHeure: timeValue || ""
+    });
+
+    alert("Date et heure de récupération enregistrées ✅");
+    location.reload();
+
+  } catch (e) {
+    alert("Erreur : " + e.message);
+  }
+}
+window.saveRecuperationDate = saveRecuperationDate;
+
+async function load() {
+  let snap = await getDocs(query(collection(db, "fiches"), orderBy("date", "desc")));
+  let zone = document.getElementById("liste");
+
+  snap.forEach(d => {
+    let f = d.data();
+    let appareils = (f.appareils || []).map(a => `• ${a.type} — ${a.marque} ${a.modele}`).join("<br>");
+    let sauv = (f.sauvegarde === "Oui") ? `Oui (${(f.sauvegardeItems || []).join(", ")})` : "Non";
+    let travaux = (f.travaux?.length) ? f.travaux.join("<br>") : "Aucun";
+    let mdp = f.motdepasse && f.motdepasse.trim() ? f.motdepasse : "Non renseigné";
+    let accessoires = (f.accessoires?.length)
+  ? f.accessoires.join("<br>")
+  : "Aucun";
+
+let accessoiresAutres = f.accessoiresAutres && f.accessoiresAutres.trim()
+  ? f.accessoiresAutres
+  : "";
+
+
+    // Préparer la valeur de l'input date (yyyy-mm-dd)
+    let recupValue = "";
+    if (f.dateRecuperation) {
+      const dRec = new Date(f.dateRecuperation);
+      if (!isNaN(dRec)) {
+        const year = dRec.getFullYear();
+        const month = String(dRec.getMonth() + 1).padStart(2,"0");
+        const day = String(dRec.getDate()).padStart(2,"0");
+        recupValue = `${year}-${month}-${day}`;
+      }
+    }
+
+    zone.insertAdjacentHTML("beforeend", `
+<div class="fiche-card accordion-card
+     ${f.repare ? 'reparee' : ''}
+     ${f.hsChangement ? 'hs' : ''}">
+  <div class="fiche-header">
+    <div class="fiche-header-left">
+      <span class="color-tag" style="background:${f.couleur || 'transparent'}"></span>
+      <div class="fiche-summary">
+        <strong class="fiche-name">${f.nom}</strong>
+        <small>
+          📅 ${new Date(f.date).toLocaleDateString()} &nbsp;|&nbsp;
+          📞 ${formatTelAffichage(f.tel)}<br>
+          💻 ${(f.appareils && f.appareils[0]) ? `${f.appareils[0].type} — ${f.appareils[0].marque}` : "—"}
+          ${f.repare ? '<span class="badge">Réparé</span>' : ''}
+          ${f.dateRecuperation ? `<br><span style="margin-left:8px; font-size:11px; background:#fff; padding:2px 6px; border-radius:4px; border:1px solid #4caf50;">📦 ${new Date(f.dateRecuperation).toLocaleDateString()}${f.dateRecuperationHeure ? " à " + f.dateRecuperationHeure : ""}</span>` : ""}
+
+          ${f.hsChangement ? '<span class="badge-hs">HS OK</span>' : ''}
+        </small>
+      </div>
+    </div>
+    <div>
+      <button class="edit-btn" onclick="editFiche('${d.id}')">✏️</button>
+      <button class="delete-btn" onclick="supprimer('${d.id}')">🗑</button>
+    </div>
+  </div>
+
+  <div class="fiche-content" id="content_${d.id}">
+    <div class="fiche-date">📅 ${new Date(f.date).toLocaleDateString()}</div>
+    <p>📞 ${formatTelAffichage(f.tel)}${f.tel2 ? `<br>📱 ${formatTelAffichage(f.tel2)}` : ""}</p>
+
+    ${f.dateRecuperation ? `<p>📦 Récupérée le : <strong>${new Date(f.dateRecuperation).toLocaleDateString()}</strong></p>` : ""}
+
+    <p>💻<strong>${appareils.replace(/•/g, "🔹")}</strong></p>
+    <p>💾 Sauvegarde : <strong>${sauv}</strong></p>
+<p>🔐 Mot de passe : <strong>${mdp}</strong></p>
+
+<p>🎒 Accessoires :
+<strong>${accessoires}</strong>
+${accessoiresAutres ? `<br><em>Autres : ${accessoiresAutres}</em>` : ""}
+</p>
+
+<p>🔧 Travaux : <strong>${travaux}</strong></p>
+<p>📝 Infos : <strong>${f.probleme}</strong></p>
+
+
+    <div class="double-col">
+
+
+
+</div>
+
+
+
+
+
+    <button class="repare-btn ${f.repare ? 'nok' : 'ok'}" onclick="toggleRepare('${d.id}', ${f.repare ? 'false' : 'true'})">
+      ${f.repare ? '❌ Marquer non réparé' : '✅ Marquer réparé'}
+    </button>
+
+    <button class="hs-btn" onclick="toggleHS('${d.id}', ${f.hsChangement ? 'false' : 'true'})">
+      ${f.hsChangement ? '❌ Annuler HS Changement' : '🔧 HS Changement OK'}
+    </button>
+
+  </div>
+</div>`);
+  });
+}
+
+load();
+</script>
+
+<script>
+document.addEventListener("click", function(e) {
+  let header = e.target.closest(".fiche-header");
+  if (!header) return;
+  header.parentNode.classList.toggle("open");
+});
+</script>
+
+</head>
+
+<body class="history-page">
+<h1>📚 Historique des dépôts</h1>
+<div id="liste" class="history-container"></div>
+<div class="center"><a href="index.html" class="link return-link">⬅ Retour</a></div>
+</body>
+</html>
