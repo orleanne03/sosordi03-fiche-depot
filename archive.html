@@ -523,18 +523,14 @@ let accessoiresAutres = f.accessoiresAutres && f.accessoiresAutres.trim()
 
   <div class="fiche-content" id="content_${d.id}">
     <div class="fiche-date">📅 ${new Date(f.date).toLocaleDateString()}</div>
-    <p>📞 ${formatTelAffichage(f.tel)}${f.tel2 ? `<br>📱 ${formatTelAffichage(f.tel2)}` : ""}</p>
+
 
     ${f.dateRecuperation ? `<p>📦 Récupérée le : <strong>${new Date(f.dateRecuperation).toLocaleDateString()}</strong></p>` : ""}
 
     <p>💻<strong>${appareils.replace(/•/g, "🔹")}</strong></p>
-    <p>💾 Sauvegarde : <strong>${sauv}</strong></p>
-<p>🔐 Mot de passe : <strong>${mdp}</strong></p>
 
-<p>🎒 Accessoires :
-<strong>${accessoires}</strong>
-${accessoiresAutres ? `<br><em>Autres : ${accessoiresAutres}</em>` : ""}
-</p>
+
+
 
 <p>🔧 Travaux : <strong>${travaux}</strong></p>
 <p>📝 Infos : <strong>${f.probleme}</strong></p>
@@ -550,13 +546,6 @@ ${accessoiresAutres ? `<br><em>Autres : ${accessoiresAutres}</em>` : ""}
 
 
 
-    <button class="repare-btn ${f.repare ? 'nok' : 'ok'}" onclick="toggleRepare('${d.id}', ${f.repare ? 'false' : 'true'})">
-      ${f.repare ? '❌ Marquer non réparé' : '✅ Marquer réparé'}
-    </button>
-
-    <button class="hs-btn" onclick="toggleHS('${d.id}', ${f.hsChangement ? 'false' : 'true'})">
-      ${f.hsChangement ? '❌ Annuler HS Changement' : '🔧 HS Changement OK'}
-    </button>
 
   </div>
 </div>`);
