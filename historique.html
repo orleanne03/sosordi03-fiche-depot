@@ -454,16 +454,16 @@ let accessoiresAutres = f.accessoiresAutres && f.accessoiresAutres.trim()
 
     ${f.dateRecuperation ? `<p>📦 Récupérée le : <strong>${new Date(f.dateRecuperation).toLocaleDateString()}</strong></p>` : ""}
 
-    <p>💻<br>${appareils.replace(/•/g, "🔹")}</p>
+    <p>💻${appareils.replace(/•/g, "🔹")}</p>
     <p>💾 Sauvegarde : <strong>${sauv}</strong></p>
 <p>🔐 Mot de passe : <strong>${mdp}</strong></p>
 
-<p>🎒 Accessoires :<br>
+<p>🎒 Accessoires :
 <strong>${accessoires}</strong>
 ${accessoiresAutres ? `<br><em>Autres : ${accessoiresAutres}</em>` : ""}
 </p>
 
-<p>🔧 Travaux :<br> <strong>${travaux}</strong></p>
+<p>🔧 Travaux : <strong>${travaux}</strong></p>
 <p>📝 ${f.probleme}</p>
 
 
