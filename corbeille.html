@@ -419,7 +419,8 @@ async function saveRecuperationDate(id) {
 window.saveRecuperationDate = saveRecuperationDate;
 
 async function load() {
-  let snap = await getDocs(query(collection(db, "fiches"), orderBy("date", "desc")));
+let snap = await getDocs(query(collection(db, "fiches_supprimees"), orderBy("dateSuppression", "desc")));
+
   let zone = document.getElementById("liste");
 
   snap.forEach(d => {
@@ -531,7 +532,8 @@ document.addEventListener("click", function(e) {
 </head>
 
 <body class="history-page">
-<h1>📚 Historique des dépôts</h1>
+<h1>🗑 Corbeille</h1>
+
 <div id="liste" class="history-container"></div>
 <div class="center"><a href="index.html" class="link return-link">⬅ Retour</a></div>
 </body>
