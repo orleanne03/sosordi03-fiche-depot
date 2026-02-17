@@ -551,6 +551,16 @@ let accessoiresAutres = f.accessoiresAutres && f.accessoiresAutres.trim()
 </div>`);
   });
 }
+function filtrerArchives() {
+  const q = document.getElementById("searchInput").value.toLowerCase();
+  const fiches = document.querySelectorAll(".fiche-card");
+
+  fiches.forEach(fiche => {
+    const texte = fiche.innerText.toLowerCase();
+    fiche.style.display = texte.includes(q) ? "block" : "none";
+  });
+}
+window.filtrerArchives = filtrerArchives;
 
 load();
 </script>
@@ -567,6 +577,16 @@ document.addEventListener("click", function(e) {
 
 <body class="history-page">
 <h1>Archives</h1>
+  <div style="text-align:center; margin:10px;">
+  <input 
+    id="searchInput"
+    type="text"
+    placeholder="🔍 Rechercher nom, téléphone, appareil..."
+    style="width:90%; max-width:400px; padding:8px; border-radius:6px; border:1px solid #aaa;"
+    oninput="filtrerArchives()"
+  >
+</div>
+
   <div style="text-align:center; margin:30px;">
   <a href="index.html" 
      style="text-decoration:none; padding:10px 15px; background:#333; color:white; border-radius:6px;">
